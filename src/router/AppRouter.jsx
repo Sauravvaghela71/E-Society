@@ -2,11 +2,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import React from "react";
 import Login from "../component/User/Login";
 import Signup from "../component/User/Signup";
-import  UserNavbar from "../component/User/UserNavbar";
+import {UserNavbar} from "../component/User/UserNavbar";
 import { AdminSidebar } from "../component/Admin/AdminSidebar";
 import { AllUserList } from "../component/Admin/AllUserList";
 import Resident from "../component/User/Resident";
 import MaintainanceSetting from "../component/User/MaintainanceSetting";
+import { GetApi } from "../component/User/GetApi";
 
 const router = createBrowserRouter([
     {path:"/",element:<Login/>},
@@ -15,7 +16,9 @@ const router = createBrowserRouter([
     {path:"/user",element:<UserNavbar/>,
         children:[
             {path:"resident",element:<Resident/>},
-            {path:"Maintainancesetting",element:<MaintainanceSetting/>}
+            {path:"Maintainancesetting",element:<MaintainanceSetting/>},
+            {path:"getapi",element:<GetApi/>}
+
         ]
     },
     {

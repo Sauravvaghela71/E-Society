@@ -1,21 +1,47 @@
 
+import axios from "axios";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Login() {
 
-  const {register,handleSubmit,formState: { errors } } = useForm();
+   const navigate = useNavigate()
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm();
+
+  const submitHandler = async(data) => {
+
+    //{email:"",password:""}
+    try{
+      const res = await axios.post("https://node5.onrender.com/user/login",data)
+      console.log("response...",res); //axios object
+      console.log("response data...",res.data); //actual data
+
+      if(res.status==200){
+        toast.success("login")
+        navigate("/user")
+      }
+     }catch(err){
+      console.log("error...",err);
+      toast.error("Login failed..")
+     }
+
+    
   };
+
 
   return (
     <div className="min-h-screen flex">
       {/* LEFT SIDE IMAGE */}
       <div className="hidden md:flex w-1/2 h-screen">
         <img
-          src="https://images.unsplash.com/photo-1557804506-669a67965ba0"
+          src="/src/assets/Society.jpg"
           alt="office"
           width={100}
           height={100}
@@ -30,7 +56,7 @@ export default function Login() {
           <h2 className="text-3xl font-bold mb-2">Welcome Back 👋</h2>
           <p className="text-gray-500 mb-6">Please login to continue</p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
 
             {/* EMAIL */}
             <div>
