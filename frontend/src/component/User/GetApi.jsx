@@ -1,26 +1,32 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from 'react-toastify';
 
 export const GetApi = () => {
   const [users, setUsers] = useState([]);
 
-  useEffect(() => {
+  
     const getuser = async()=>{
-      try {
-      const response = await axios.get(
-        "https://node5.onrender.com/user/user/"
-      );
-
+      
+      const response = await axios.get("https://node5.onrender.com/user/user/");
       console.log(response.data.data);
       setUsers(response.data.data);
-
-      } catch (error) {
-        console.log(error);
       }
-    }
-    getuser()
     
-  }, []);
+
+    const DeleteUser = async(id)=>{
+      
+        const res = await axios.delete(`https://node5.onrender.com/user/user/${id}`)
+        console.log(res);
+        if(res.status==204){
+          toast.success("delete user succesfully")
+        }
+        getuser()
+      } 
+    
+  useEffect(()=>{
+    getuser()
+  },[]);
 
   return (
     <div className="p-8">
@@ -49,6 +55,9 @@ export const GetApi = () => {
                 <td className="py-2 px-4 border">{user.name}</td>
                 <td className="py-2 px-4 border">{user.email}</td>
                 <td className="py-2 px-4 border">{user.role}</td>
+                <td>
+                  <button onClick={()=>{DeleteUser(user._id)}}>DELETE</button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -56,4 +65,5 @@ export const GetApi = () => {
       </div>
     </div>
   );
-};
+}
+
