@@ -56,7 +56,7 @@ export const GetApi = () => {
                 <td className="py-2 px-4 border">{user.email}</td>
                 <td className="py-2 px-4 border">{user.role}</td>
                 <td>
-                  <button onClick={()=>{DeleteUser(user._id)}}>DELETE</button>
+                  <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={()=>{DeleteUser(user._id)}}>DELETE</button>
                 </td>
               </tr>
             ))}
