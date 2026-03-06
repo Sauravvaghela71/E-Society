@@ -1,8 +1,12 @@
 
+import axios from "axios";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
+
+  const navigate = useNavigate()
 
   const {
     register,
@@ -13,8 +17,11 @@ export default function Signup() {
 
   const password = watch("password");
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log(data);
+    const res = await axios.post("http://localhost:5100/register",data)
+    console.log(res);
+    
   };
 
   return (
@@ -108,6 +115,13 @@ export default function Signup() {
               className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
             >
               Signup
+            </button>
+
+            <button onClick={()=>{navigate("/")}}
+              type="submit"
+              className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
+            >
+              Login
             </button>
 
           </form>

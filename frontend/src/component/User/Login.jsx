@@ -19,7 +19,7 @@ export default function Login() {
 
     //{email:"",password:""}
     try{
-      const res = await axios.post("https://node5.onrender.com/user/login",data)
+      const res = await axios.post("",data)
       console.log("response...",res); //axios object
       console.log("response data...",res.data); //actual data
 
@@ -100,6 +100,13 @@ export default function Login() {
               className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
             >
               Login
+            </button>
+
+            <button onClick={()=>{navigate("/Signup")}}
+              type="submit"
+              className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
+            >
+              Signup
             </button>
 
           </form>

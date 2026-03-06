@@ -3,6 +3,7 @@ const app = express()
 const cors = require("cors")
 const Database = require("./Database/DB")
 const bodyParser = require("body-parser")
+const User = require('./src/Model/Signup');
 
 Database()
 
@@ -15,23 +16,28 @@ const users = require("./src/Route/ResidentUserRoute")
 app.use(users)
 
 // GET API
-app.get("/employee", (req, res) => {
-    res.json([
-        { id: 1001, name: "saurav" },
-        { id: 1002, name: "rohit" },
-        { id: 1003, name: "rahul" }
-    ])
+app.get("/login", (req, res) => {
+   res.send("loginapi")
 })
 
 // POST API
-app.post("/flat", (req, res) => {
+app.post("/register",async(req, res) => {
     console.log(req.body)
 
+     const user = new User({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password
+        })
+     const result = await user.save()
+     
     res.json({
         message: "successfully insert",
         data: req.body
     })
 })
+
+
 
 const PORT = 5100
 
