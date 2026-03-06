@@ -17,6 +17,7 @@ export default function Signup() {
 
   const password = watch("password");
 
+  
   const onSubmit = async (data) => {
     console.log(data);
     const res = await axios.post("http://localhost:5100/register",data)
