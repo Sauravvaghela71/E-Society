@@ -8,9 +8,9 @@ export const GetApi = () => {
   
     const getuser = async()=>{
       
-      const response = await axios.get("https://node5.onrender.com/user/user/");
-      console.log(response.data.data);
-      setUsers(response.data.data);
+      const response = await axios.post("http://localhost:5100/flat", [{id:1001,name:"saurav"},{id:1002,name:"rohit"},{id:1003,name:"rahul"}]);
+      console.log(response.data);
+      setUsers(response.data);
       }
     
 
@@ -42,11 +42,13 @@ export const GetApi = () => {
               <th className="py-3 px-4 border">Name</th>
               <th className="py-3 px-4 border">Email</th>
               <th className="py-3 px-4 border">Role</th>
+              <th className="py-3 px-4 border">Button</th>
+              
             </tr>
           </thead>
 
           <tbody>
-            {users.map((user, index) => (
+            {/* {!users.map((user, index) => (
               <tr
                 key={user._id}
                 className="text-center hover:bg-gray-100 transition"
@@ -59,7 +61,7 @@ export const GetApi = () => {
                   <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={()=>{DeleteUser(user._id)}}>DELETE</button>
                 </td>
               </tr>
-            ))}
+            ))} */}
           </tbody>
         </table>
       </div>

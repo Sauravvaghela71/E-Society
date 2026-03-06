@@ -5,7 +5,7 @@ const user = [{name : "saurav",age:21,city:"deesa"},
 
 const Resident = (req,res)=>{
    res.json({
-    massage : "user fpund",
+    massage : "user found",
     data : user
    });
 }
