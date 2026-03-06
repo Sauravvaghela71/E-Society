@@ -2,6 +2,7 @@ const express = require("express")
 const app = express()
 const cors = require("cors")
 const Database = require("./Database/DB")
+
 const bodyParser = require("body-parser")
 const User = require('./src/Model/Signup');
 
@@ -30,7 +31,7 @@ app.post("/register",async(req, res) => {
             password: req.body.password
         })
      const result = await user.save()
-     
+
     res.json({
         message: "successfully insert",
         data: req.body
