@@ -1,59 +1,65 @@
+import React from "react";
+import { Link } from "react-router-dom";
 
-import React, { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
-
-export const AdminSidebar = () => {
-
-  const [isOpen, setIsOpen] = useState(true);
-
+export default function AdminSidebar() {
   return (
-    <div className="flex min-h-screen">
+    <div className="w-64 h-screen bg-gray-900 text-white p-5 fixed">
 
-      {/* SIDEBAR */}
-      <div className={`bg-gray-900 text-white p-5 transition-all duration-300 
-        ${isOpen ? "w-64" : "w-16"}`}>
+      <h1 className="text-2xl font-bold mb-10">
+        E-Society Admin
+      </h1>
 
-        <button
-          className="mb-6 text-white"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          ☰
-        </button>
+      <ul className="space-y-6">
 
-        <ul className="space-y-4 font-medium">
+        <li>
+          <Link to="/" className="hover:text-blue-400">
+            Dashboard
+          </Link>
+        </li>
 
-          <li>
-            <Link to="/admin/dashboard" className="block hover:text-blue-400">
-              Dashboard
-            </Link>
-          </li>
+        <li>
+          <Link to="/dashboard/resident" className="hover:text-blue-400">
+            Residents
+          </Link>
+        </li>
 
-          <li>
-            <Link to="/admin/users" className="block hover:text-blue-400">
-              Users
-            </Link>
-          </li>
+        <li>
+          <Link to="/dashboard/maintainancesetting" className="hover:text-blue-400">
+            Maintenance
+          </Link>
+        </li>
 
-          <li>
-            <Link to="/admin/settings" className="block hover:text-blue-400">
-              Settings
-            </Link>
-          </li>
+        <li>
+          <Link to="/dashboard/security" className="hover:text-blue-400">
+            Security
+          </Link>
+        </li>
 
-          <li>
-            <button className="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
-              Logout
-            </button>
-          </li>
+        <li>
+          <Link to="/dashboard/visitor" className="hover:text-blue-400">
+            Visitor
+          </Link>
+        </li>
 
-        </ul>
-      </div>
+        <li>
+          <Link to="/dashboard/complain" className="hover:text-blue-400">
+            Complain
+          </Link>
+        </li>
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 p-6 bg-gray-100">
-        <Outlet/>
-      </div>
+        <li>
+          <Link to="/dashboard/Expense" className="hover:text-blue-400">
+            Expense
+          </Link>
+        </li>
 
+        <li>
+          <Link to="/dashboard/totalExpense" className="hover:text-blue-400">
+            Total Expense
+          </Link>
+        </li>
+
+      </ul>
     </div>
   );
-};
+}

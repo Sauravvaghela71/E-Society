@@ -23,16 +23,13 @@ export const UserNavbar = () => {
                 GET API DEMO 1
               </Link>
             </li> */}
-            <li>
-              <Link to="getapi" className="hover:text-blue-500">
-                GetApi
-              </Link>
-            </li>
+           
             <li>
               <Link to="/user/settings" className="hover:text-blue-500">
                 Settings
               </Link>
             </li>
+           
             <li>
               <button className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600">
                 Logout
@@ -70,11 +67,10 @@ export const UserNavbar = () => {
           </ul>
         )}
       </nav>
-
-      
+{/* 
       <div className="p-6 bg-gray-100 min-h-[calc(100vh-64px)]">
         <Outlet/>
-      </div>
+      </div> */}
     </>
   );
 };
