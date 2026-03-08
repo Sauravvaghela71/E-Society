@@ -2,8 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import React from "react";
 
 import Login from "../component/User/Login";
-import Signup from "../component/User/Signup";
-import Resident from "../component/User/Resident";
+import Resident from "../component/Admin/Resident";
 import MaintainanceSetting from "../component/Admin/Maintaince/MaintainanceSetting";
 
 import AdminLayout from "../component/Admin/AdminLayout";
@@ -15,6 +14,7 @@ import Emergency from "../component/Admin/Emergency";
 import Security from "../component/Admin/Security";
 import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
+import Complaint from "../component/Admin/Complain";
 
 const router = createBrowserRouter([
   
@@ -22,10 +22,6 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
-  },
-  {
-    path: "/signup",
-    element: <Signup />
   },
 
   // admin dashboard routes
@@ -36,7 +32,7 @@ const router = createBrowserRouter([
         {index: true, element:<Dashboard/>},
       {
         path: "/dashboard/resident",
-        element: <Resident />
+        element: <Resident/>
       },
       {
         path: "maintainancesetting",
@@ -48,7 +44,7 @@ const router = createBrowserRouter([
       },
         {
         path: "/dashboard/complain",
-        element: <Complain />
+        element: <Complaint />
       },
         {
         path: "/dashboard/notice",
