@@ -59,6 +59,12 @@ export default function AdminSidebar() {
           </Link>
         </li>
 
+        <li>
+          <Link to="/dashboard/society" className="hover:text-blue-400">
+            Society
+          </Link>
+        </li>
+
       </ul>
     </div>
   );

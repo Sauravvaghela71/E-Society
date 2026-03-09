@@ -1,23 +1,87 @@
 import { useForm } from "react-hook-form";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 export default function ResidentForm() {
-  const {
+
+  const [showForm, setShowForm] = useState(false);
+  // const [residents, setResidents] = useState([]);
+  const [user, setUser] = useState([]);
+  
+ const {
     register,
     handleSubmit,
     formState: { errors }
   } = useForm();
 
+const resident = async (data) => {
+
+  try {
+
+    const res = await axios.post(
+      "http://localhost:5100/api/residents",
+      data
+    );
+
+    setUser([...user, res.data]); // FIX
+
+    alert("Resident Added Successfully");
+
+    setShowForm(false); // FIX
+
+  } catch (error) {
+
+    console.log(error);
+    alert("Error adding resident");
+
+  }
+
+};
+ 
+useEffect(() => {
+
+  const fetchResidents = async () => {  
+
+    try {
+
+      const res = await axios.get(
+        "http://localhost:5100/api/residents"
+      );
+      // console.log("data fetched...",res.data);
+      
+      setUser(res.data);
+
+    } catch (error) {
+
+      console.log(error);
+
+    }
+
+  };
+
+  fetchResidents();
+
+}, []);
+
   const onSubmit = (data) => {
-    console.log(data);
+    resident(data);
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6">
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Add New Resident
-      </h1>
+      <button
+            onClick={() => setShowForm(true)}
+            className="mb-6 px-5 py-2 bg-green-600 text-white rounded"
+          >
+            Add New Resident
+      </button>
 
+      {/* <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        Add New Resident
+      </h1> */}
+
+      {showForm &&
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
         {/* ---------------- Personal Info ---------------- */}
@@ -251,11 +315,12 @@ export default function ResidentForm() {
         <div className="flex justify-end gap-4">
 
           <button
-            type="button"
-            className="px-6 py-2 border rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+  type="button"
+  onClick={() => setShowForm(false)}
+  className="px-6 py-2 border rounded-lg"
+>
+Cancel
+</button>
 
           <button
             type="submit"
@@ -267,6 +332,79 @@ export default function ResidentForm() {
         </div>
 
       </form>
+      }
+
+{user.length > 0 && (
+       <div className="mt-10">
+
+  <h2 className="text-2xl font-bold mb-4">
+    Residents List
+  </h2>
+
+  {/* Scroll container */}
+  <div className="w-230 overflow-x-auto">
+
+    <table className="min-w-[1400px] border text-sm">
+
+      <thead>
+        <tr className="bg-gray-200 text-sm whitespace-nowrap">
+          <th className="border px-3 py-2">Name</th>
+          <th className="border px-3 py-2">Gender</th>
+          <th className="border px-3 py-2">DOB</th>
+          <th className="border px-3 py-2">Mobile</th>
+          <th className="border px-3 py-2">Email</th>
+          <th className="border px-3 py-2">Wing</th>
+          <th className="border px-3 py-2">Flat</th>
+          <th className="border px-3 py-2">Floor</th>
+          <th className="border px-3 py-2">Resident Type</th>
+          <th className="border px-3 py-2">Move In</th>
+          <th className="border px-3 py-2">Move Out</th>
+          <th className="border px-3 py-2">ID Type</th>
+          <th className="border px-3 py-2">ID Number</th>
+          <th className="border px-3 py-2">Vehicle</th>
+          <th className="border px-3 py-2">Emergency Name</th>
+          <th className="border px-3 py-2">Emergency Number</th>
+          <th className="border px-3 py-2">Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {user.map((u, i) => (
+
+          <tr key={i} className="text-center hover:bg-gray-50 whitespace-nowrap">
+
+            <td className="border px-3 py-2">{u.firstName} {u.lastName}</td>
+            <td className="border px-3 py-2">{u.gender}</td>
+            <td className="border px-3 py-2">{u.dateOfBirth}</td>
+            <td className="border px-3 py-2">{u.mobileNumber}</td>
+            <td className="border px-3 py-2">{u.email}</td>
+            <td className="border px-3 py-2">{u.wing}</td>
+            <td className="border px-3 py-2">{u.flatNumber}</td>
+            <td className="border px-3 py-2">{u.floorNumber}</td>
+            <td className="border px-3 py-2">{u.residentType}</td>
+            <td className="border px-3 py-2">{u.moveInDate}</td>
+            <td className="border px-3 py-2">{u.moveOutDate}</td>
+            <td className="border px-3 py-2">{u.idProofType}</td>
+            <td className="border px-3 py-2">{u.idProofNumber}</td>
+            <td className="border px-3 py-2">{u.vehicleNumber}</td>
+            <td className="border px-3 py-2">{u.emergencyContactName}</td>
+            <td className="border px-3 py-2">{u.emergencyContactNumber}</td>
+            <td className="border px-3 py-2">{u.status}</td>
+
+          </tr>
+
+        ))}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+      )}
+      
     </div>
   );
 }
@@ -320,3 +458,5 @@ function Select({ label, register, options, error, required }) {
     </div>
   );
 }
+
+

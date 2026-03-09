@@ -15,6 +15,7 @@ import Security from "../component/Admin/Security";
 import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
 import Complaint from "../component/Admin/Complain";
+import Society from "../component/Admin/Society";
 
 const router = createBrowserRouter([
   
@@ -65,6 +66,10 @@ const router = createBrowserRouter([
        {
         path: "/dashboard/expense",
         element: <Expense />
+      },
+      {
+        path: "/dashboard/society",
+        element: <Society />
       },
     ]
   }
