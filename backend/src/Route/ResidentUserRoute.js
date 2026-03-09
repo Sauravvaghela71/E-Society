@@ -1,6 +1,6 @@
 const Router = require("express").Router()
 
-const user = require("../Controller/ResidentUser")
+const user = require("../Controller/ResidentController")
 
 Router.get("/user",user.Resident)
 

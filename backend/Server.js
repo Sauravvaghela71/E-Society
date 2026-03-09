@@ -4,7 +4,8 @@ const cors = require("cors")
 const Database = require("./Database/DB")
 
 const bodyParser = require("body-parser")
-const User = require('./src/Model/Signup');
+// const Signup = require('./src/Model/Signup');
+const user = require('./src/Route/UserRouter')
 
 Database()
 
@@ -13,30 +14,33 @@ app.use(cors())
 app.use(bodyParser.json())
 
 // Routes
-const users = require("./src/Route/ResidentUserRoute")
-app.use(users)
+// const users = require("./src/Route/ResidentUserRoute")
+// app.use(users)
+
+
+
 
 // GET API
-app.get("/login", (req, res) => {
-   res.send("loginapi")
-})
-
+// app.get("/login", (req, res) => {
+//    res.send("loginapi")
+// })
+app.use("/api",user);
 // POST API
-app.post("/register",async(req, res) => {
-    console.log(req.body)
+// app.post("/register",async(req, res) => {
+//     console.log(req.body)
 
-     const user = new User({
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password
-        })
-     const result = await user.save()
+//      const user = new User({
+//             name: req.body.name,
+//             email: req.body.email,
+//             password: req.body.password
+//         })
+//      const result = await user.save()
 
-    res.json({
-        message: "successfully insert",
-        data: req.body
-    })
-})
+//     res.json({
+//         message: "successfully insert",
+//         data: req.body
+//     })
+// })
 
 
 
