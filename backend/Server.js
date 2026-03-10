@@ -10,6 +10,7 @@ const Database = require("./Database/DB");
 const user = require("./src/Route/UserRouter");
 const resident = require("./src/Route/ResidentRoute");
 const security = require("./src/Route/SecurityRoute");
+const society = require("./src/Route/SocietyRoute");
 
 /* ---------------- DATABASE CONNECTION ---------------- */
 
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use("/api/users", user);
 app.use("/api/residents", resident);
 app.use("/api/security",security)
+app.use("/api/",society)
 
 /* ---------------- TEST API ---------------- */
 
