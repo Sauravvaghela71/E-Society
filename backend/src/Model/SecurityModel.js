@@ -14,7 +14,7 @@ const securitySchema = new mongoose.Schema({
   state: String,
   pincode: String,
 
-  guardId: String,
+  
   shift: String,
   joiningDate: Date,
 

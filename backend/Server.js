@@ -9,7 +9,7 @@ const Database = require("./Database/DB");
 
 const user = require("./src/Route/UserRouter");
 const resident = require("./src/Route/ResidentRoute");
-const security = require("./src/Route/SecurityRoute")
+const security = require("./src/Route/SecurityRoute");
 
 /* ---------------- DATABASE CONNECTION ---------------- */
 
