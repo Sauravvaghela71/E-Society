@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require("express")
 const router = express.Router();
 
 const {
@@ -12,12 +12,10 @@ const {
 
 
 /* ---------------- CREATE RESIDENT ---------------- */
-
 router.post("/", createResident);
 
 
 /* ---------------- GET ALL RESIDENTS ---------------- */
-
 router.get("/", getResidents);
 
 
@@ -27,17 +25,14 @@ router.get("/search", searchResidents);
 
 
 /* ---------------- GET SINGLE RESIDENT ---------------- */
-
 router.get("/:id", getResidentById);
 
 
 /* ---------------- UPDATE RESIDENT ---------------- */
-
 router.put("/:id", updateResident);
 
 
 /* ---------------- DELETE RESIDENT ---------------- */
-
 router.delete("/:id", deleteResident);
 
 

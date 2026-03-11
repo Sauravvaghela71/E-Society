@@ -7,10 +7,11 @@ const Database = require("./Database/DB");
 
 /* ---------------- ROUTES ---------------- */
 
-const user = require("./src/Route/UserRouter");
+const user = require("./src/Route/SignupRoute");
 const resident = require("./src/Route/ResidentRoute");
 const security = require("./src/Route/SecurityRoute");
 const society = require("./src/Route/SocietyRoute");
+const SignupRoute = require("./src/Route/SignupRoute")
 
 /* ---------------- DATABASE CONNECTION ---------------- */
 
@@ -24,10 +25,11 @@ app.use(express.json());
 
 /* ---------------- ROUTES ---------------- */
 
-app.use("/api/users", user);
+app.use("/api/users",user);
 app.use("/api/residents", resident);
 app.use("/api/security",security)
 app.use("/api/",society)
+app.use("/api",SignupRoute)
 
 /* ---------------- TEST API ---------------- */
 
