@@ -18,21 +18,21 @@ export const UserNavbar = () => {
 
           
           <ul className="hidden md:flex gap-6 items-center font-medium">
-            {/* <li>
-              <Link to="/user/getapidemo1" className="hover:text-blue-500">
-                GET API DEMO 1
+            <li>
+              <Link to="/login" className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600">
+                LOGIN
               </Link>
-            </li> */}
+            </li>
            
             <li>
-              <Link to="/user/settings" className="hover:text-blue-500">
-                Settings
+              <Link to="/user/settings" className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600">
+                SETTINGS
               </Link>
             </li>
            
             <li>
               <button className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600">
-                Logout
+               LOGOUT
               </button>
             </li>
           </ul>
