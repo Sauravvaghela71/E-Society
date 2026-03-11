@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -6,8 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export default function Login() {
-
-   const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const {
     register,
@@ -15,36 +13,32 @@ export default function Login() {
     formState: { errors }
   } = useForm();
 
-  const submitHandler = async(data) => {
-
-    //{email:"",password:""}
-    try{
-      const res = await axios.post("",data)
-      console.log("response...",res); //axios object
-      console.log("response data...",res.data); //actual data
-
-      if(res.status==200){
-        toast.success("login")
-        navigate("/user")
+  const submitHandler = async (data) => {
+    try {
+      const res = await axios.post("http://localhost:5100/api/login", data);
+      if (res.status == 200) {
+        toast.success("Login Success");
+        if (res.data.role.toLowerCase() === "user") {
+          navigate("/");
+        } else if (res.data.role.toLowerCase() === "admin") {
+          navigate("/admin");
+        } else {
+          toast.error("Invalid Role");
+          navigate("/");
+        }
       }
-     }catch(err){
-      console.log("error...",err);
-      toast.error("Login failed..")
-     }
-
-    
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login Failed");
+    }
   };
-
 
   return (
     <div className="min-h-screen flex">
       {/* LEFT SIDE IMAGE */}
       <div className="hidden md:flex w-1/2 h-screen">
         <img
-          src="/src/assets/Society.jpg"
+          src="https://images.unsplash.com/photo-1557804506-669a67965ba0"
           alt="office"
-          width={100}
-          height={100}
           className="object-cover w-full h-full"
         />
       </div>
@@ -52,25 +46,19 @@ export default function Login() {
       {/* RIGHT SIDE FORM */}
       <div className="flex items-center justify-center w-full md:w-1/2 px-6">
         <div className="w-full max-w-md">
-
           <h2 className="text-3xl font-bold mb-2">Welcome Back 👋</h2>
           <p className="text-gray-500 mb-6">Please login to continue</p>
 
           <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-
             {/* EMAIL */}
             <div>
               <input
                 type="email"
                 placeholder="Email"
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                {...register("email", {required: "Email is required"})}
+                {...register("email", { required: "Email is required" })}
               />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.email.message}
-                </p>
-              )}
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             {/* PASSWORD */}
@@ -81,20 +69,13 @@ export default function Login() {
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 {...register("password", {
                   required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Minimum 6 characters"
-                  }
+                  minLength: { value: 6, message: "Minimum 6 characters" }
                 })}
               />
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password.message}
-                </p>
-              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
             </div>
 
-            {/* BUTTON */}
+            {/* LOGIN BUTTON */}
             <button
               type="submit"
               className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
@@ -102,18 +83,21 @@ export default function Login() {
               Login
             </button>
 
-            <button onClick={()=>{navigate("/Signup")}}
-              type="submit"
-              className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
-            >
-              Signup
-            </button>
-
+            {/* NEW SIGNUP LINK (Added here) */}
+            <div className="mt-4 text-center">
+              <p className="text-gray-600 text-sm">
+                Don't have an account?{" "}
+                <span
+                  onClick={() => navigate("/signup")}
+                  className="text-blue-500 font-semibold cursor-pointer hover:underline"
+                >
+                  Sign Up here
+                </span>
+              </p>
+            </div>
           </form>
-
         </div>
       </div>
-
     </div>
   );
 }
