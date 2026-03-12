@@ -42,7 +42,9 @@ const loginUser= async(req,res)=>{
             const isPasswordMatched = await bcrypt.compare(password,foundUserFromEmail.password)
            console.log("password matched : "+isPasswordMatched)
              //..if password compare it will return true else false
-            if(isPasswordMatched){
+             mailSend(foundUserFromEmail.email,"Login Alert","Your account was just logged in. If this was not you, please secure your account immediately.")
+
+             if(isPasswordMatched){
                 res.status(200).json({
                     message:"Login Success",
                     data:foundUserFromEmail,
