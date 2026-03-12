@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, Outlet, Link } from "react-router-dom";
-// Icons માટે (જો react-icons ઇન્સ્ટોલ હોય તો)
+
 import { FaShieldAlt, FaFileInvoiceDollar, FaBullhorn, FaArrowRight } from "react-icons/fa";
 
 export default function HomePage() {
@@ -41,7 +41,7 @@ export default function HomePage() {
       </nav>
 
       {/* --- DYNAMIC CONTENT (OUTLET) --- */}
-      {/* અહીં તમારા ચિલ્ડ્રન રૂટ્સ લોડ થશે */}
+      
       <Outlet />
 
       {/* --- HERO SECTION --- */}

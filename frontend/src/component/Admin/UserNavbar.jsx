@@ -11,7 +11,7 @@ export const UserNavbar = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     navigate("/login");
-    window.location.reload(); // સ્ટેટ ક્લીન કરવા માટે
+    window.location.reload(); 
   };
 
   return (
@@ -79,7 +79,7 @@ export const UserNavbar = () => {
       </nav>
 
       {/* --- CONTENT AREA (OUTLET) --- */}
-      {/* આ ભાગ ખૂબ જરૂરી છે, જે તમે કમેન્ટ કર્યો હતો */}
+     
       <main className="p-4 md:p-8 max-w-7xl mx-auto">
         <Outlet /> 
       </main>
