@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate, Outlet, Link } from "react-router-dom";
 
 import { FaShieldAlt, FaFileInvoiceDollar, FaBullhorn, FaArrowRight } from "react-icons/fa";
+import Header from "./Header";
+import Footer from "./Footer";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -9,36 +11,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-700">
       
-      {/* --- NAVIGATION BAR --- */}
-      <nav className="flex items-center justify-between px-6 py-5 md:px-12 bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-100 transition-all">
-        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-200 group-hover:rotate-12 transition-transform">
-            E
-          </div>
-          <span className="text-xl font-black tracking-tighter text-gray-800 uppercase italic">Society</span>
-        </div>
-        
-        <div className="hidden md:flex gap-10 font-bold text-[11px] text-gray-500 uppercase tracking-[0.2em]">
-          <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
-          <a href="#about" className="hover:text-blue-600 transition-colors">How it works</a>
-          <a href="#contact" className="hover:text-blue-600 transition-colors">Contact</a>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate("/login")} 
-            className="px-6 py-2.5 rounded-2xl font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all active:scale-95 border border-transparent hover:border-gray-200"
-          >
-            Login
-          </button>
-          <button 
-            onClick={() => navigate("/signup")} 
-            className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95"
-          >
-            Join Now <FaArrowRight className="text-[10px]" />
-          </button>
-        </div>
-      </nav>
+        <Header/>
 
       {/* --- DYNAMIC CONTENT (OUTLET) --- */}
       
@@ -120,18 +93,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* --- FOOTER --- */}
-      <footer className="py-20 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm">E</div>
-            <span className="text-lg font-black tracking-tight text-gray-900 uppercase">Society</span>
-          </div>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-[0.3em]">
-            © 2026 eSociety Management System. All Rights Reserved.
-          </p>
-        </div>
-      </footer>
+     <Footer/>
     </div>
   );
 }

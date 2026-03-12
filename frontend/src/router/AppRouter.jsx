@@ -17,13 +17,14 @@ import Expense from "../component/Admin/Expense";
 import Complaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
 import Signup from "../component/Admin/Signup";
-import Home from "../component/User/HomePage";
-import AdminSidebar from "../component/Admin/AdminSidebar";
 import HomePage from "../component/User/HomePage";
-import { UserNavbar } from "../component/Admin/UserNavbar";
+import UserNavbar from "../component/Admin/UserNavbar";
+import { User } from "lucide-react";
+import UserProfile from "../component/User/UserProfile";
 
 const router = createBrowserRouter([
   
+
   // public routes
   {
     path: "/login",
@@ -91,26 +92,33 @@ const router = createBrowserRouter([
     ]
   },
 
-  // 2. USER ROUTES
+ 
+   // 2. USER ROUTES
+  // home page (public landing)
   {
     path: "/",
-    element: <HomePage />,
+    element: <HomePage />
   },
 
+  // authenticated user dashboard with navbar
   {
-    path: "/navbar",
+    path: "/user",
     element: <UserNavbar />,
     children: [
       {
-        index: true, 
-        element: <div className="p-10 text-2xl font-bold">Welcome to User Dashboard Content</div> 
+        index: true,
+        element: <div className="p-10 text-2xl font-bold">Welcome to User Dashboard Content</div>
       },
       {
         path: "settings",
         element: <div>User Settings Page</div>
+      },
+      {
+        path: "profile",
+        element: <UserProfile />
       }
     ]
-  },
+  }
 
 ]);
 

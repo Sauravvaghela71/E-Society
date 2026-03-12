@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { UserNavbar } from "./UserNavbar";
+
 import AdminSidebar from "./AdminSidebar";
 import HomePage from "../User/HomePage";
 

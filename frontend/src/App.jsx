@@ -8,7 +8,6 @@ function App() {
 
   return (
     <>
-    
       <AppRouter/>
           <ToastContainer
               position="top-right"

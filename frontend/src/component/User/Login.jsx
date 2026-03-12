@@ -26,10 +26,11 @@ export default function Login() {
         if (userRole === "admin") {
           navigate("/admin/dashboard");
         } else if (userRole === "user") {
-          navigate("/navbar");
+          // send users to their dashboard root; homepage remains public
+          navigate("/user");
         } else {
-          toast.warning("Role not defined, redirecting to home");
-          navigate("/");
+          toast.warning("Role not defined, redirecting to login");
+          navigate("/login");
         }
       }
     } catch (err) {
