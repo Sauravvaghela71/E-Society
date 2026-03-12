@@ -43,6 +43,11 @@ const residentSchema = new mongoose.Schema(
     sparse: true
   },
 
+  password: {
+    type: String,
+    required: true
+  },  
+
 
   /* ---------------- Flat Details ---------------- */
 
@@ -59,7 +64,8 @@ const residentSchema = new mongoose.Schema(
   },
 
   floorNumber: {
-    type: Number
+    type: String,
+    trim: true
   },
 
 
@@ -67,13 +73,14 @@ const residentSchema = new mongoose.Schema(
 
   residentType: {
     type: String,
-    enum: ["Owner", "Tenant", "Family"],
+    enum: ["Owner", "Tenant", "Admin","Guard"],
     required: true
   },
 
   moveInDate: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    required: true
   },
 
   moveOutDate: {
@@ -85,7 +92,7 @@ const residentSchema = new mongoose.Schema(
 
   idProofType: {
     type: String,
-    enum: ["Aadhaar", "PAN", "Driving License", "Passport"]
+    enum: ["Aadhaar"]
   },
 
   idProofNumber: {

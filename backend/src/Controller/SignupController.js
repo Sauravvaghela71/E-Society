@@ -36,17 +36,19 @@ const loginUser= async(req,res)=>{
         const {email,password} = req.body
         //const foundUserFromEmail = await userSchema.findOne({modelColumnName:req.body.email})
         const foundUserFromEmail = await userSchema.findOne({email:email}) //admin@yopmail.com
-        console.log(foundUserFromEmail)
         if(foundUserFromEmail){
+            console.log("user found"+foundUserFromEmail)
             //password compare
             const isPasswordMatched = await bcrypt.compare(password,foundUserFromEmail.password)
-            //..if password compare it will return true else false
+           console.log("password matched : "+isPasswordMatched)
+             //..if password compare it will return true else false
             if(isPasswordMatched){
                 res.status(200).json({
                     message:"Login Success",
                     data:foundUserFromEmail,
                     role:foundUserFromEmail.role
                 })  
+
             }
             else{
                 //401 -->unauthorized
