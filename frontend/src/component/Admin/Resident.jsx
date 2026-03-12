@@ -145,7 +145,8 @@ export default function ResidentForm() {
             <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Contact Information</h2>
             <div className="grid md:grid-cols-2 gap-5">
               <Input label="Mobile Number" required error={errors.mobileNumber} register={register("mobileNumber", { required: "Mobile required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid 10 digit number" } })} />
-              <Input label="Email" error={errors.email} register={register("email", { pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
+              <Input label="Email" error={errors.email} register={register("email",{required: "Email required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
+              <Input label="Password" type="password" {...register("password", { required: "Password required" })} />
             </div>
           </div>
 
@@ -155,7 +156,7 @@ export default function ResidentForm() {
             <div className="grid md:grid-cols-3 gap-5">
               <Input label="Wing" required error={errors.wing} register={register("wing", { required: "Wing required" })} />
               <Input label="Flat Number" required error={errors.flatNumber} register={register("flatNumber", { required: "Flat number required" })} />
-              <Input type="number" label="Floor Number" register={register("floorNumber")} />
+              <Input type="number" label="Floor " register={register("floor", { required: "Floor required" })} option={["First", "Second", "Third", "Fourth", "Fifth"]} />
             </div>
           </div>
 
@@ -164,7 +165,7 @@ export default function ResidentForm() {
             <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Resident Details</h2>
             <div className="grid md:grid-cols-3 gap-5">
               <Select label="Resident Type" required error={errors.residentType} register={register("residentType", { required: "Required" })} options={["Owner", "Tenant", "Family"]} />
-              <Input type="date" label="Move In Date" register={register("moveInDate")} />
+              <Input type="date" label="Move In Date" register={register("moveInDate", { required: "Move in date required" })} />
               <Input type="date" label="Move Out Date" register={register("moveOutDate")} />
             </div>
           </div>
@@ -174,8 +175,8 @@ export default function ResidentForm() {
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
               <div className="grid md:grid-cols-2 gap-5">
-                <Select label="ID Proof Type" register={register("idProofType")} options={["Aadhaar", "PAN", "Driving License", "Passport"]} />
-                <Input label="ID Proof Number" register={register("idProofNumber")} />
+                <Select label="ID Proof Type" register={register("idProofType")} options={["Aadhaar"]} />
+                <Input label="ID Proof Number" register={register("idProofNumber", { required: "ID proof number required" })} />
               </div>
             </div>
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
@@ -189,8 +190,8 @@ export default function ResidentForm() {
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
               <div className="grid md:grid-cols-2 gap-5">
-                <Input label="Name" register={register("emergencyContactName")} />
-                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber", { pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
+                <Input label="Name" register={register("emergencyContactName", { required: "Emergency contact name required" })} />
+                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber",{ required: "Emergency contact number required" }, { pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
               </div>
             </div>
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
@@ -221,6 +222,7 @@ export default function ResidentForm() {
                     <th className="px-4 py-3">Wing-Flat</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Mobile</th>
+
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Actions</th>
                   </tr>

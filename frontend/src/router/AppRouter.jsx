@@ -17,6 +17,10 @@ import Expense from "../component/Admin/Expense";
 import Complaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
 import Signup from "../component/Admin/Signup";
+import Home from "../component/User/HomePage";
+import AdminSidebar from "../component/Admin/AdminSidebar";
+import HomePage from "../component/User/HomePage";
+import { UserNavbar } from "../component/Admin/UserNavbar";
 
 const router = createBrowserRouter([
   
@@ -26,19 +30,24 @@ const router = createBrowserRouter([
     element: <Login />
   },
 
-  {
-    path: "/signup",
-    element: <Signup />
-  },
+    {
+      path: "/signup",
+      element: <Signup />
+    },
+    
 
   // admin dashboard routes
   {
-    path: "/",
+    path: "/admin",
     element: <AdminLayout />,
     children: [
-        {index: true, element:<Dashboard/>},
+       
       {
-        path: "/dashboard/resident",
+        path: "dashboard",
+        element: <Dashboard />
+      },
+      {
+        path: "resident",
         element: <Resident/>
       },
       {
@@ -46,41 +55,50 @@ const router = createBrowserRouter([
         element: <MaintainanceSetting />
       },
         {
-        path: "/dashboard/visitor",
+        path: "visitor",
         element: <Visitor />
       },
         {
-        path: "/dashboard/complain",
+        path: "complain",
         element: <Complaint />
       },
         {
-        path: "/dashboard/notice",
+        path: "notice",
         element: <Notice />
       },
         {
-        path: "/dashboard/emergency",
+        path: "emergency",
         element: <Emergency />
       },
         {
-        path: "/dashboard/security",
+        path: "security",
         element: <Security />
       },
         {
-        path: "/dashboard/totalexpense",
+        path: "totalexpense",
         element: <TotalExpense />
       },
        {
-        path: "/dashboard/expense",
+        path: "expense",
         element: <Expense />
       },
       {
-        path: "/dashboard/society",
+        path: "society",
         element: <Society />
       },
       
       
     ]
-  }
+  },
+
+  // 2. USER ROUTES
+  {
+    path: "/user",
+    element: <UserNavbar />,
+    children: [
+      { path: "home", element: <HomePage /> },
+    ],
+  },
 
 ]);
 

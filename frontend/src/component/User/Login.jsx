@@ -6,34 +6,41 @@ import { toast } from "react-toastify";
 
 export default function Login() {
   const navigate = useNavigate();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
   const submitHandler = async (data) => {
+    console.log("Login Data:", data);
     try {
+      
       const res = await axios.post("http://localhost:5100/api/login", data);
-      if (res.status == 200) {
+      
+      if (res.status === 200) {
         toast.success("Login Success");
-        if (res.data.role.toLowerCase() === "user") {
-          navigate("/");
-        } else if (res.data.role.toLowerCase() === "admin") {
-          navigate("/admin");
+        
+        const userData = res.data.data || res.data;
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        const userRole = userData.role?.toLowerCase();
+
+       
+        if (userRole === "admin") {
+          navigate("/admin/dashboard");
+        } else if (userRole === "user") {
+          navigate("/user/home");
         } else {
-          toast.error("Invalid Role");
+          toast.warning("Role not defined, redirecting to home");
           navigate("/");
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login Failed");
+      
+      console.error("Login Error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Invalid Email or Password");
     }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-50">
       {/* LEFT SIDE IMAGE */}
       <div className="hidden md:flex w-1/2 h-screen">
         <img
@@ -45,53 +52,42 @@ export default function Login() {
 
       {/* RIGHT SIDE FORM */}
       <div className="flex items-center justify-center w-full md:w-1/2 px-6">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold mb-2">Welcome Back 👋</h2>
-          <p className="text-gray-500 mb-6">Please login to continue</p>
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
+          <h2 className="text-3xl font-black mb-2 text-gray-800">Welcome Back 👋</h2>
+          <p className="text-gray-500 mb-8 font-medium">Please login to access e-Society</p>
 
-          <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-            {/* EMAIL */}
+          <form onSubmit={handleSubmit(submitHandler)} className="space-y-5">
             <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
               <input
                 type="email"
-                placeholder="Email"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter your email"
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`}
                 {...register("email", { required: "Email is required" })}
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message}</p>}
             </div>
 
-            {/* PASSWORD */}
             <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
               <input
                 type="password"
-                placeholder="Password"
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: { value: 6, message: "Minimum 6 characters" }
-                })}
+                placeholder="Enter your password"
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.password ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`}
+                {...register("password", { required: "Password is required" })}
               />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message}</p>}
             </div>
 
-            {/* LOGIN BUTTON */}
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition"
-            >
-              Login
+            <button type="submit" className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
+              Login Now
             </button>
 
-            {/* NEW SIGNUP LINK (Added here) */}
-            <div className="mt-4 text-center">
-              <p className="text-gray-600 text-sm">
+            <div className="pt-4 text-center border-t border-gray-100">
+              <p className="text-gray-500 text-sm font-medium">
                 Don't have an account?{" "}
-                <span
-                  onClick={() => navigate("/signup")}
-                  className="text-blue-500 font-semibold cursor-pointer hover:underline"
-                >
-                  Sign Up here
+                <span onClick={() => navigate("/signup")} className="text-blue-600 font-bold cursor-pointer hover:underline">
+                  Register here
                 </span>
               </p>
             </div>

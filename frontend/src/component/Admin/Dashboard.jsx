@@ -7,55 +7,55 @@ const Dashboard = () => {
     {
       name: "Resident",
       count: 240,
-      path: "/dashboard/resident",
+      path: "/admin/resident",
       color: "bg-blue-500"
     },
     {
       name: "Visitor",
       count: 34,
-      path: "/dashboard/visitor",
+      path: "/admin/visitor",
       color: "bg-purple-500"
     },
     {
       name: "Complain",
       count: 12,
-      path: "/dashboard/complain",
+      path: "/admin/complain",
       color: "bg-red-500"
     },
     {
       name: "Facility Booking",
       count: 8,
-      path: "/dashboard/facilities",
+      path: "/admin/facilities",
       color: "bg-green-500"
     },
     {
       name: "Maintenance Setting",
       count: "₹48k Pending",
-      path: "/dashboard/payments",
+      path: "/admin/maintainancesetting",
       color: "bg-yellow-500"
     },
     {
       name: "Security Staff",
       count: 6,
-      path: "/dashboard/security",
+      path: "/admin/security",
       color: "bg-indigo-500"
     },
     {
       name: "Notice",
       count: 5,
-      path: "/dashboard/notice",
+      path: "/admin/notice",
       color: "bg-pink-500"
     },
     {
       name: "expense",
       count: 5,
-      path: "/dashboard/expense",
+      path: "/admin/expense",
       color: "bg-pink-500"
     },
     {
       name: "Emergency Alerts",
       count: 2,
-      path: "/dashboard/emergency",
+      path: "/admin/emergency",
       color: "bg-orange-500"
     }
   ];
