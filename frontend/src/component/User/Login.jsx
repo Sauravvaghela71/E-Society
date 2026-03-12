@@ -26,7 +26,7 @@ export default function Login() {
         if (userRole === "admin") {
           navigate("/admin/dashboard");
         } else if (userRole === "user") {
-          navigate("/user/home");
+          navigate("/navbar");
         } else {
           toast.warning("Role not defined, redirecting to home");
           navigate("/");

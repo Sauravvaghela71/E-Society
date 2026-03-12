@@ -93,11 +93,23 @@ const router = createBrowserRouter([
 
   // 2. USER ROUTES
   {
-    path: "/user",
+    path: "/",
+    element: <HomePage />,
+  },
+
+  {
+    path: "/navbar",
     element: <UserNavbar />,
     children: [
-      { path: "home", element: <HomePage /> },
-    ],
+      {
+        index: true, 
+        element: <div className="p-10 text-2xl font-bold">Welcome to User Dashboard Content</div> 
+      },
+      {
+        path: "settings",
+        element: <div>User Settings Page</div>
+      }
+    ]
   },
 
 ]);
