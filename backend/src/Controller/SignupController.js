@@ -14,7 +14,8 @@ const registerUser = async(req,res)=>{
         //const savedUser = await userSchema.create(req.body)
         const savedUser = await userSchema.create({...req.body,password:hashedPassword})
         //send mail...
-        // await mailSend(savedUser.email,"Welcome to our app","Thank you for registering with our app.")
+             mailSend(savedUser.email,"Welcome to our app","Thank you for registering with our app.")
+        //  await mailSend(savedUser.email,"Welcome to our app","Thank you for registering with our app.")
         res.status(201).json({
             message:"user created successfully",
             data:savedUser
@@ -42,7 +43,6 @@ const loginUser= async(req,res)=>{
             const isPasswordMatched = await bcrypt.compare(password,foundUserFromEmail.password)
            console.log("password matched : "+isPasswordMatched)
              //..if password compare it will return true else false
-             mailSend(foundUserFromEmail.email,"Login Alert","Your account was just logged in. If this was not you, please secure your account immediately.")
 
              if(isPasswordMatched){
                 res.status(200).json({
