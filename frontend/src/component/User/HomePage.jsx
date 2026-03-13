@@ -5,17 +5,18 @@ import { FaShieldAlt, FaFileInvoiceDollar, FaBullhorn, FaArrowRight } from "reac
 import Header from "./Header";
 import Footer from "./Footer";
 
-export default function HomePage() {
+export default function HomePage({ showHeader = true, showFooter = true }) {
   const navigate = useNavigate();
 
   return (
+    <>
+    {showHeader && <Header />}
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-700">
       
-        <Header/>
 
       {/* --- DYNAMIC CONTENT (OUTLET) --- */}
       
-      <Outlet />
+      {/* <Outlet /> */}
 
       {/* --- HERO SECTION --- */}
       <main>
@@ -93,8 +94,9 @@ export default function HomePage() {
         </section>
       </main>
 
-     <Footer/>
+     {showFooter && <Footer />}
     </div>
+    </>
   );
 }
 

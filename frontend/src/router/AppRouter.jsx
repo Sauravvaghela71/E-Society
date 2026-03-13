@@ -18,9 +18,20 @@ import Complaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
 import Signup from "../component/Admin/Signup";
 import HomePage from "../component/User/HomePage";
-import UserNavbar from "../component/Admin/UserNavbar";
-import { User } from "lucide-react";
+import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
+import UserDashboard from "../component/User/UserDashboard";
+import { Navigate } from "react-router-dom";
+
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true";
+  
+  if (!isAuthenticated) {
+    // If not authenticated, send user to login page
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 
 const router = createBrowserRouter([
   
@@ -40,7 +51,7 @@ const router = createBrowserRouter([
   // admin dashboard routes
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: <ProtectedRoute><AdminLayout /></ProtectedRoute>,
     children: [
        
       {
@@ -103,11 +114,15 @@ const router = createBrowserRouter([
   // authenticated user dashboard with navbar
   {
     path: "/user",
-    element: <UserNavbar />,
+    element: (
+      <ProtectedRoute>
+        <UserLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
-        element: <div className="p-10 text-2xl font-bold">Welcome to User Dashboard Content</div>
+        element: <UserDashboard />
       },
       {
         path: "settings",
@@ -116,6 +131,10 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <UserProfile />
+      },
+      {
+        path:"complaints",
+        element:<Complaint/>
       }
     ]
   }

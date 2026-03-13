@@ -19,6 +19,7 @@ export default function Login() {
         
         const userData = res.data.data || res.data;
         localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("isLoggedIn", "true");
 
         const userRole = userData.role?.toLowerCase();
 
