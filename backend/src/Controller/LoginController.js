@@ -1,5 +1,5 @@
 
-const userSchema = require("../Model/SignupModel")
+const userSchema = require("../Model/LoginModel")
 const bcrypt = require("bcrypt")
 const mailSend = require("../Util/MailSend")
 

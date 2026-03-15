@@ -16,8 +16,8 @@ const mailSend = async(to,subject,text)=>{
     const mailOptions  = {
         to:to,
         subject:subject,
-        text:text
-        //html:text
+        text:text,
+        html:text
     }
     const mailResponse = await transporter.sendMail(mailOptions)
     console.log(mailResponse)
