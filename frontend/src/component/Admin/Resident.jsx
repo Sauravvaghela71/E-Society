@@ -15,68 +15,86 @@ export default function ResidentForm() {
     formState: { errors }
   } = useForm();
 
-  // 1. Fetch Residents Logic
+  // 1. FETCH ALL RESIDENTS
+  const fetchResidents = async () => {
+    try {
+      const res = await axios.get("http://localhost:5100/api/residents");
+      // Backend agar { data: [...] } bhej raha hai toh res.data.data use karein
+      const data = Array.isArray(res.data) ? res.data : res.data.data || [];
+      setUser(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchResidents = async () => {
-      try {
-        const res = await axios.get("http://localhost:5100/api/residents");
-        setUser(res.data);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    };
     fetchResidents();
   }, []);
 
-  // 2. REGISTER & UPDATE Logic
+  // 2. SUBMIT LOGIC (ADD & UPDATE)
   const onSubmit = async (data) => {
-  try {
-   
-    const cleanData = { ...data };
-    
-    if (cleanData.idProofType === "") delete cleanData.idProofType;
-    if (cleanData.status === "") delete cleanData.status;
-    if (cleanData.gender === "") delete cleanData.gender;
-    if (cleanData.residentType === "") delete cleanData.residentType;
+    try {
+      const cleanData = { ...data };
 
-    if (editId) {
-      // UPDATE Logic
-      const { _id, __v, ...updateData } = cleanData;
-      const res = await axios.put(`http://localhost:5100/api/residents/${editId}`, updateData);
-      setUser(user.map((u) => (u._id === editId ? res.data : u)));
-      alert("Resident Updated Successfully");
-    } else {
-      // CREATE Logic
-      const res = await axios.post("http://localhost:5100/api/residents", cleanData);
-      setUser([...user, res.data]);
-      alert("Resident Added Successfully");
+      // Empty values ko remove karna taki DB validation error na de
+      Object.keys(cleanData).forEach((key) => {
+        if (cleanData[key] === "" || cleanData[key] === null) delete cleanData[key];
+      });
+
+      if (editId) {
+        // --- UPDATE LOGIC ---
+        // Internal fields ko body se nikalna zaroori hai
+        const { _id, __v, createdAt, updatedAt, ...updateBody } = cleanData;
+        
+        const res = await axios.put(`http://localhost:5100/api/residents/${editId}`, updateBody);
+        
+        const updatedObj = res.data.data || res.data;
+        setUser((prev) => prev.map((u) => (u._id === editId ? updatedObj : u)));
+        alert("Resident Updated Successfully!");
+      } else {
+        // --- CREATE LOGIC ---
+        const res = await axios.post("http://localhost:5100/api/residents", cleanData);
+        
+        const newObj = res.data.data || res.data;
+        setUser((prev) => [...prev, newObj]);
+        alert("Resident Added Successfully!");
+      }
+      closeForm();
+    } catch (error) {
+      console.error("Submission Error:", error.response?.data || error.message);
+      alert("Error: " + (error.response?.data?.message || "Something went wrong"));
     }
-    closeForm();
-  } catch (error) {
-    console.error("Submission Error:", error.response?.data || error.message);
-   
-    const serverMessage = error.response?.data?.message || "Internal Server Error";
-    alert("Error: " + serverMessage);
-  }
-};
-  // 3. DELETE Logic
+  };
+
+  // 3. DELETE LOGIC
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this resident?")) return;
     try {
       await axios.delete(`http://localhost:5100/api/residents/${id}`);
-      setUser(user.filter((u) => u._id !== id));
+      setUser((prev) => prev.filter((u) => u._id !== id));
     } catch (error) {
-      console.log(error);
+      console.error("Delete error:", error);
       alert("Error deleting resident");
     }
   };
 
-  // 4. EDIT Helper
+  // 4. EDIT HELPER (Mapping data to form)
   const handleEdit = (resident) => {
-  setEditId(resident._id);
-  reset(resident); 
-  setShowForm(true);
-};
+    setEditId(resident._id);
+    
+    // Date formatting: Backend se aane wali date ko 'YYYY-MM-DD' mein convert karna
+    const formattedResident = { ...resident };
+    const dateFields = ["dateOfBirth", "moveInDate", "moveOutDate"];
+    
+    dateFields.forEach(field => {
+      if (resident[field]) {
+        formattedResident[field] = new Date(resident[field]).toISOString().split('T')[0];
+      }
+    });
+
+    reset(formattedResident); 
+    setShowForm(true);
+  };
 
   const closeForm = () => {
     setShowForm(false);
@@ -84,9 +102,10 @@ export default function ResidentForm() {
     reset({});
   };
 
+  // 5. SEARCH LOGIC
   const filteredUsers = user.filter((u) => {
     const searchStr = searchQuery.toLowerCase();
-    const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+    const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
     return (
       fullName.includes(searchStr) ||
       u.flatNumber?.toLowerCase().includes(searchStr) ||
@@ -97,7 +116,7 @@ export default function ResidentForm() {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 min-h-screen">
       
-      {/* ---------------- Header Area (Unchanged) ---------------- */}
+      {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-5 rounded-xl shadow-sm border">
         <h1 className="text-2xl font-bold text-gray-800">Resident Management</h1>
         <div className="flex w-full md:w-auto gap-4">
@@ -119,10 +138,9 @@ export default function ResidentForm() {
         </div>
       </div>
 
-      {/* ---------------- Form Area (Your Original Design) ---------------- */}
+      {/* Form Area */}
       {showForm && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mb-10 bg-gray-50 p-1">
-          
           <div className="flex justify-between items-center border-b pb-4 mb-4">
             <h2 className="text-2xl font-bold text-gray-800">
               {editId ? "Update Resident Details" : "Add New Resident"}
@@ -146,7 +164,11 @@ export default function ResidentForm() {
             <div className="grid md:grid-cols-2 gap-5">
               <Input label="Mobile Number" required error={errors.mobileNumber} register={register("mobileNumber", { required: "Mobile required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid 10 digit number" } })} />
               <Input label="Email" error={errors.email} register={register("email",{required: "Email required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
-              <Input label="Password" type="password" {...register("password", { required: "Password required" })} />
+              
+              {/* Password field only for New Registration */}
+              {!editId && (
+                <Input label="Password" type="password" required error={errors.password} register={register("password", { required: "Password required" })} />
+              )}
             </div>
           </div>
 
@@ -156,7 +178,7 @@ export default function ResidentForm() {
             <div className="grid md:grid-cols-3 gap-5">
               <Input label="Wing" required error={errors.wing} register={register("wing", { required: "Wing required" })} />
               <Input label="Flat Number" required error={errors.flatNumber} register={register("flatNumber", { required: "Flat number required" })} />
-              <Input type="number" label="Floor " register={register("floor", { required: "Floor required" })} option={["First", "Second", "Third", "Fourth", "Fifth"]} />
+              <Input type="number" label="Floor" register={register("floor", { required: "Floor required" })} />
             </div>
           </div>
 
@@ -175,7 +197,7 @@ export default function ResidentForm() {
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
               <div className="grid md:grid-cols-2 gap-5">
-                <Select label="ID Proof Type" register={register("idProofType")} options={["Aadhaar"]} />
+                <Select label="ID Proof Type" register={register("idProofType")} options={["Aadhaar", "PAN", "Voter ID"]} />
                 <Input label="ID Proof Number" register={register("idProofNumber", { required: "ID proof number required" })} />
               </div>
             </div>
@@ -191,7 +213,7 @@ export default function ResidentForm() {
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
               <div className="grid md:grid-cols-2 gap-5">
                 <Input label="Name" register={register("emergencyContactName", { required: "Emergency contact name required" })} />
-                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber",{ required: "Emergency contact number required" }, { pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
+                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber",{ required: "Emergency contact number required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
               </div>
             </div>
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
@@ -209,7 +231,7 @@ export default function ResidentForm() {
         </form>
       )}
 
-      {/* ---------------- Table Area (Unchanged) ---------------- */}
+      {/* Table Area */}
       {!showForm && (
         <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
           {filteredUsers.length > 0 ? (
@@ -217,12 +239,10 @@ export default function ResidentForm() {
               <table className="min-w-full text-sm text-left">
                 <thead className="bg-gray-100 text-gray-700 font-semibold border-b">
                   <tr className="whitespace-nowrap">
-                    
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Wing-Flat</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Mobile</th>
-
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Actions</th>
                   </tr>
@@ -230,7 +250,6 @@ export default function ResidentForm() {
                 <tbody className="divide-y divide-gray-100">
                   {filteredUsers.map((u) => (
                     <tr key={u._id} className="hover:bg-blue-50/50 transition whitespace-nowrap">
-                      
                       <td className="px-4 py-3 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
                       <td className="px-4 py-3"><span className="bg-gray-100 px-2 py-1 rounded font-mono">{u.wing} - {u.flatNumber}</span></td>
                       <td className="px-4 py-3">{u.residentType}</td>
@@ -258,22 +277,30 @@ export default function ResidentForm() {
   );
 }
 
-// Reusable Components (Design untouched)
+// Reusable Input Component
 function Input({ label, register, error, required, type = "text" }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
-      <input type={type} {...register} className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`} />
+      <input 
+        type={type} 
+        {...register} 
+        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`} 
+      />
       {error && <p className="text-red-500 text-xs mt-1 font-medium">{error.message}</p>}
     </div>
   );
 }
 
+// Reusable Select Component
 function Select({ label, register, options, error, required }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
-      <select {...register} className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm bg-white ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}>
+      <select 
+        {...register} 
+        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm bg-white ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
+      >
         <option value="">Select...</option>
         {options.map((item) => <option key={item} value={item}>{item}</option>)}
       </select>

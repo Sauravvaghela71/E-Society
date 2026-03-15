@@ -27,42 +27,42 @@ const UserDashboard = () => {
       title: "Complaints",
       description: "Submit and track your complaints",
       icon: <MessageCircle className="text-orange-500" />,
-      path: "/user/complaints", // Assuming a route, or make it a placeholder
+      path: "/user/complaint", // Assuming a route, or make it a placeholder
       color: "bg-orange-50 hover:bg-orange-100"
     },
     {
       title: "Maintenance Bills",
       description: "View and pay your maintenance fees",
       icon: <CreditCard className="text-green-500" />,
-      path: "/payments", // Placeholder
+      path: "/user/payment", // Placeholder
       color: "bg-green-50 hover:bg-green-100"
     },
     {
       title: "Notices",
       description: "Read important society notices",
       icon: <Bell className="text-purple-500" />,
-      path: "/notices", // Placeholder
+      path: "/user/notice", // Placeholder
       color: "bg-purple-50 hover:bg-purple-100"
     },
     {
       title: "Visitor Logs",
       description: "Check visitor entries and security",
       icon: <ShieldCheck className="text-indigo-500" />,
-      path: "/visitors", // Placeholder
+      path: "/user/visitor", // Placeholder
       color: "bg-indigo-50 hover:bg-indigo-100"
     },
     {
       title: "Documents",
       description: "Access society documents and bylaws",
       icon: <FileText className="text-teal-500" />,
-      path: "/documents", // Placeholder
+      path: "/user/documents", // Placeholder
       color: "bg-teal-50 hover:bg-teal-100"
     },
     {
       title: "Events",
       description: "View upcoming society events",
       icon: <Calendar className="text-pink-500" />,
-      path: "/events", // Placeholder
+      path: "/user/events", // Placeholder
       color: "bg-pink-50 hover:bg-pink-100"
     }
   ];
@@ -110,13 +110,13 @@ const UserDashboard = () => {
               Update Profile
             </button>
             <button
-              onClick={() => navigate("/complaints")}
+              onClick={() => navigate("/user/complaint")}
               className="px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all"
             >
               New Complaint
             </button>
             <button
-              onClick={() => navigate("/payments")}
+              onClick={() => navigate("/user/payment")}
               className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all"
             >
               Pay Bill

@@ -71,12 +71,12 @@ const Header = () => {
                     <Home size={14} /> Overview
                   </Link>
                   <Link to="/admin/expense" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                    <CreditCard size={14} /> Payments
+                    <CreditCard size={14} /> Expenses
                   </Link>
                   <Link to="/admin/complain" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
                     <MessageCircle size={14} /> Complaints
                   </Link>
-                  <Link to="/admin/visitor" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                  <Link to="/admin/security" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
                     <ShieldCheck size={14} /> Security
                   </Link>
                 </>

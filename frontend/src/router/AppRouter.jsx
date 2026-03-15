@@ -21,6 +21,7 @@ import HomePage from "../component/User/HomePage";
 import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
 import UserDashboard from "../component/User/UserDashboard";
+import FlatDetails from "../component/Admin/FlatDetails";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
@@ -98,6 +99,14 @@ const router = createBrowserRouter([
         path: "society",
         element: <Society />
       },
+      {
+        path: "notice",
+        element: <Notice /> 
+      },
+      {
+        path:"flatdetails",
+        element:<FlatDetails/>
+      }
       
       
     ]
@@ -133,9 +142,10 @@ const router = createBrowserRouter([
         element: <UserProfile />
       },
       {
-        path:"complaints",
+        path:"complaint",
         element:<Complaint/>
       }
+
     ]
   }
 

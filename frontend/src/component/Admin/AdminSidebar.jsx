@@ -43,11 +43,17 @@ export default function AdminSidebar() {
 
         <nav className="custom-scrollbar overflow-y-auto max-h-[calc(100vh-250px)]">
           <ul className="space-y-1">
-            <SidebarLink 
+            {/* <SidebarLink 
               to="/admin" 
               icon={<FaTachometerAlt />} 
               label="Dashboard" 
               active={isActive("/admin")} 
+            /> */}
+            <SidebarLink 
+              to="/admin/dashboard" 
+              icon={<FaTachometerAlt />}
+              label="Dashboard"
+              active={isActive("/admin/dashboard")}
             />
             <SidebarLink 
               to="/admin/resident" 
@@ -97,6 +103,13 @@ export default function AdminSidebar() {
               label="Society Info" 
               active={isActive("/admin/society")} 
             />
+            <SidebarLink 
+              to="/admin/flatdetails" 
+              icon={<FaBuilding />} 
+              label="Flat Details" 
+              active={isActive("/admin/flatdetails")} 
+            />
+
           </ul>
         </nav>
       </div>
