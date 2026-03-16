@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
+
 const visitorSchema = new mongoose.Schema({
     visitorName: { type: String, required: true },
     mobileNumber: { type: String, required: true },
     visitingResident: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', // Yahan resident ki ID aayegi
+        ref: 'Resident', 
         required: true 
     },
     blockWing: { type: String, required: true },
