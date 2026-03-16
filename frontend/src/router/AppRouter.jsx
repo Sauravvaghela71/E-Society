@@ -16,7 +16,6 @@ import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
 import Complaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
-import Signup from "../component/Admin/Signup";
 import HomePage from "../component/User/HomePage";
 import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
@@ -42,11 +41,6 @@ const router = createBrowserRouter([
     path: "/login",
     element: <Login />
   },
-
-    {
-      path: "/signup",
-      element: <Signup />
-    },
     
 
   // admin dashboard routes
