@@ -7,8 +7,12 @@ const {
   getSecurityById,
   updateSecurity,
   deleteSecurity,
-  searchSecurity
+  searchSecurity,
+  loginSecurity
 } = require("../Controller/SecurityController");
+
+//login 
+router.post("/login", loginSecurity);
 
 
 /* ---------------- CREATE SECURITY GUARD ---------------- */

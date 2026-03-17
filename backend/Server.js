@@ -5,39 +5,51 @@ const bodyParser = require("body-parser");
 
 const Database = require("./Database/DB");
 
-/* ---------------- ROUTES ---------------- */
+/* ROUTES */
 
-// const user = require("./src/Route/UserRoute");
+const user = require("./src/Route/UserRoute");
 const resident = require("./src/Route/ResidentRoute");
+const expense = require("./src/Route/ExpenseRoute")
 const security = require("./src/Route/SecurityRoute");
 const society = require("./src/Route/SocietyRoute");
-const SignupRoute = require("./src/Route/LoginRoute")
+const complaint = require("./src/Route/ComplainRoute");
+const notice = require("./src/Route/NoticeRoute");
+const visitor = require("./src/Route/VisitorRoute");
+const totalExpense = require("./src/Route/TotalExpenseRoute");
+// const emergency = require("./src/Route/EmergencyRoute");
+// const flat = require("./src/Route/FlatRoute");
 
-/* ---------------- DATABASE CONNECTION ---------------- */
+/* DATABASE */
 
 Database();
 
-/* ---------------- MIDDLEWARES ---------------- */
+/* MIDDLEWARE */
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 
-/* ---------------- ROUTES ---------------- */
+/* ROUTES */
 
-// app.use("/api/users",user);
+app.use("/api/user", user);
 app.use("/api/residents", resident);
-app.use("/api/security",security)
-app.use("/api/",society)
-app.use("/api",SignupRoute)
+app.use("/api/expense", expense)
+app.use("/api/security", security);
+app.use("/api/society", society);
+app.use("/api/complaint", complaint);
+app.use("/api/notice", notice);
+app.use("/api/visitor", visitor);
+app.use("/api/totalExpense", totalExpense);
+// app.use("/api/emergency", emergency);
+// app.use("/api/flat", flat);
 
-/* ---------------- TEST API ---------------- */
+/* TEST */
 
 app.get("/", (req, res) => {
   res.send("E-Society API Running");
 });
 
-/* ---------------- SERVER ---------------- */
+/* SERVER */
 
 const PORT = 5100;
 

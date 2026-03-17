@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const noticeController = require("../controllers/noticeController");
+const noticeController = require("../Controller/NoticeController");
 
 // Main routes for /api/notices
 router.route("/")

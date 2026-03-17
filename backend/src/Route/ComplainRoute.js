@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const complainController = require("../controllers/complainController");
+const complainController = require("../Controller/ComplainController");
 
 // Route for creating and getting all
 router.route("/")

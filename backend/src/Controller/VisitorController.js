@@ -1,4 +1,4 @@
-const Visitor = require("../models/Visitor");
+const Visitor = require("../Model/VisitorModel");
 
 // 1. Check-In: Add a new visitor
 exports.checkInVisitor = async (req, res) => {

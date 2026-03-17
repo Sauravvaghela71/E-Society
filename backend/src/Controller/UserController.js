@@ -1,56 +1,156 @@
-const User = require("../Model/UserModel");
+// const userSchema = require("../Model/UserModel");
+// const bcrypt = require("bcrypt");
+// const mailSend = require("../Util/MailSend");
+// // const jwt = require("jsonwebtoken"); // 1. JWT Import karein
 
-// CREATE USER
-exports.createUser = async (req, res) => {
-  try {
-    const user = await User.create(req.body);
+// const jwt = require("../AuthMiddleware/Jwt")
+// // Secret Key (Isse .env file mein rakhein toh behtar hai)
+// // const JWT_SECRET = "your_super_secret_key_123"; 
 
-    res.status(201).json({
-      message: "User Created",
-      data: user
-    });
+// const registerUser = async (req, res) => {
+//     try {
+//         const hashedPassword = await bcrypt.hash(req.body.password, 10);
+//         const savedUser = await userSchema.create({ ...req.body, password: hashedPassword });
+        
+//         mailSend(savedUser.email, "Welcome to our app", "Thank you for registering with our app.");
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//         res.status(201).json({
+//             message: "user created successfully",
+//             data: savedUser
+//         });
+//     } catch (err) {
+//         res.status(500).json({
+//             message: "error while creating user",
+//             err: err
+//         });
+//     }
+// }
+
+// const loginUser = async (req, res) => {
+//     try {
+//         const { email, password } = req.body;
+//         const foundUserFromEmail = await userSchema.findOne({ email: email });
+
+//         if (foundUserFromEmail) {
+//             // Password compare
+//             const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
+
+//             if (isPasswordMatched) {
+//                 //jwt token generate
+//                 const token = jwt.sign(
+//                     { 
+//                         id: foundUserFromEmail._id, 
+//                         role: foundUserFromEmail.role 
+//                     }, 
+//                     JWT_SECRET, 
+//                     { expiresIn: "24h" } 
+//                 );
+
+//                 // 3. response token and user data
+//                 res.status(200).json({
+//                     message: "Login Success",
+//                     token: token, 
+//                     data: {
+//                         _id: foundUserFromEmail._id,
+//                         name: foundUserFromEmail.name,
+//                         email: foundUserFromEmail.email,
+//                         role: foundUserFromEmail.role,
+//                         flatNo: foundUserFromEmail.flatNo, 
+//                         avatar: foundUserFromEmail.avatar
+//                     }
+//                 });
+//             }
+//             else {
+//                 res.status(401).json({
+//                     message: "Invalid Credentials"
+//                 });
+//             }
+//         }
+//         else {
+//             res.status(404).json({
+//                 message: "user not found."
+//             });
+//         }
+//     } catch (err) {
+//         res.status(500).json({
+//             message: "error while logging in",
+//             err: err.message
+//         });
+//     }
+// }
+
+// module.exports = {
+//     registerUser,
+//     loginUser
+// }
 
 
-// GET ALL USERS
-exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
+const userSchema = require("../Model/UserModel");
+const bcrypt = require("bcrypt");
+const mailSend = require("../Util/MailSend");
 
-    res.status(200).json(users);
+const registerUser = async (req, res) => {
+    try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const savedUser = await userSchema.create({ ...req.body, password: hashedPassword });
+        
+        mailSend(savedUser.email, "Welcome to our app", "Thank you for registering with our app.");
 
-  } catch (error) {
-    res.status(500).json({
-      error: error.message
-    });
-  }
-};
-
-
-// DELETE USER
-exports.deleteUser = async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    const user = await User.findByIdAndDelete(id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
+        res.status(201).json({
+            message: "user created successfully",
+            data: savedUser
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "error while creating user",
+            err: err.message
+        });
     }
+}
 
-    res.status(200).json({
-      message: "User deleted successfully"
-    });
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const foundUserFromEmail = await userSchema.findOne({ email: email });
 
-  } catch (error) {
-    res.status(500).json({
-      error: error.message
-    });
-  }
-};
+        if (foundUserFromEmail) {
+            // Password compare
+            const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
+
+            if (isPasswordMatched) {
+                // JWT logic removed - Sending user data directly
+                res.status(200).json({
+                    message: "Login Success",
+                    data: {
+                        _id: foundUserFromEmail._id,
+                        name: foundUserFromEmail.name,
+                        email: foundUserFromEmail.email,
+                        role: foundUserFromEmail.role,
+                        flatNo: foundUserFromEmail.flatNo, 
+                        avatar: foundUserFromEmail.avatar
+                    }
+                });
+            }
+            else {
+                res.status(401).json({
+                    message: "Invalid Credentials"
+                });
+            }
+        }
+        else {
+            res.status(404).json({
+                message: "user not found."
+            });
+        }
+    } catch (err) {
+        res.status(500).json({
+            message: "error while logging in",
+            err: err.message
+        });
+    }
+}
+
+module.exports = {
+    registerUser,
+    loginUser
+}
