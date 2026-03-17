@@ -114,43 +114,46 @@ const loginUser = async (req, res) => {
         const foundUserFromEmail = await userSchema.findOne({ email: email });
 
         if (foundUserFromEmail) {
-            // Password compare
             const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
 
             if (isPasswordMatched) {
-                // JWT logic removed - Sending user data directly
                 res.status(200).json({
                     message: "Login Success",
                     data: {
                         _id: foundUserFromEmail._id,
-                        name: foundUserFromEmail.name,
                         email: foundUserFromEmail.email,
                         role: foundUserFromEmail.role,
-                        flatNo: foundUserFromEmail.flatNo, 
-                        avatar: foundUserFromEmail.avatar
+                        // MongoDB fields mapping
+                        firstName: foundUserFromEmail.firstName, 
+                        lastName: foundUserFromEmail.lastName,
+                        flatNo: foundUserFromEmail.flatNo,
+                        profilePic: foundUserFromEmail.profilePic
                     }
                 });
+            } else {
+                res.status(401).json({ message: "Invalid Credentials" });
             }
-            else {
-                res.status(401).json({
-                    message: "Invalid Credentials"
-                });
-            }
-        }
-        else {
-            res.status(404).json({
-                message: "user not found."
-            });
+        } else {
+            res.status(404).json({ message: "User not found." });
         }
     } catch (err) {
-        res.status(500).json({
-            message: "error while logging in",
-            err: err.message
-        });
+        res.status(500).json({ message: "Error while logging in", err: err.message });
     }
 }
 
+// UserController.js
+const getUserById = async (req, res) => {
+  try {
+    const user = await userSchema.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    getUserById
 }

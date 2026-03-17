@@ -16,8 +16,6 @@ const complaint = require("./src/Route/ComplainRoute");
 const notice = require("./src/Route/NoticeRoute");
 const visitor = require("./src/Route/VisitorRoute");
 const totalExpense = require("./src/Route/TotalExpenseRoute");
-// const emergency = require("./src/Route/EmergencyRoute");
-// const flat = require("./src/Route/FlatRoute");
 
 /* DATABASE */
 
@@ -40,8 +38,6 @@ app.use("/api/complaint", complaint);
 app.use("/api/notice", notice);
 app.use("/api/visitor", visitor);
 app.use("/api/totalExpense", totalExpense);
-// app.use("/api/emergency", emergency);
-// app.use("/api/flat", flat);
 
 /* TEST */
 

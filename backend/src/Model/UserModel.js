@@ -17,7 +17,7 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
 const userSchema = new Schema({
-    Name: { type: String, required: true },
+    Name: { type: String, },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: {
@@ -26,16 +26,16 @@ const userSchema = new Schema({
         enum: ["resident", "admin", "security"]
     },
    
-    profileModel: {
-        type: String,
-        required: true,
-        enum: ['categories', 'resident', 'security'] 
-    },
+    // profileModel: {
+    //     type: String,
+    //     required: true,
+    //     enum: ['categories', 'resident', 'security'] 
+    // },
    
     profileid: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        refPath: 'profileModel' 
+        refPath: 'role' 
     },
     status: {
         type: String,

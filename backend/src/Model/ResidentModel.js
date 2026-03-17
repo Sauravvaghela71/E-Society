@@ -95,11 +95,10 @@ const residentSchema = new mongoose.Schema(
     enum: ["Aadhaar"]
   },
 
-  idProofNumber: {
+  idProofImagePath: {
     type: String,
-    trim: true
+    required: true,
   },
-
 
   /* ---------------- Vehicle Details ---------------- */
 

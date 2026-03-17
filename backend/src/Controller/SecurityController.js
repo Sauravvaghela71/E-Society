@@ -30,8 +30,24 @@ exports.loginSecurity = async (req, res) => {
 /* ---------------- CREATE SECURITY ---------------- */
 exports.createSecurity = async (req, res) => {
   try {
-    
-    const security = new Security(req.body);
+    const { mobile, password, ...rest } = req.body;
+
+    // Check if mobile already exists
+    const existingGuard = await Security.findOne({ mobile });
+    if (existingGuard) {
+      return res.status(400).json({ message: "Security guard with this mobile number already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new guard
+    const security = new Security({
+      mobile,
+      password: hashedPassword,
+      ...rest
+    });
+
     const savedSecurity = await security.save();
     res.status(201).json(savedSecurity);
   } catch (error) {

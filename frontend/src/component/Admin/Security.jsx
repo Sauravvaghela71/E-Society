@@ -9,11 +9,13 @@ export default function Security() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  // --- FETCH DATA ---
+  
+
   const fetchGuards = async () => {
     try {
       const res = await axios.get("http://localhost:5100/api/security");
-      setGuards(res.data);
+      const data = Array.isArray(res.data) ? res.data : res.data.data || [];
+      setGuards(data);
     } catch (err) {
       console.error("Failed to fetch guards:", err);
     }
@@ -23,18 +25,16 @@ export default function Security() {
     fetchGuards();
   }, []);
 
-  // --- ADD / UPDATE ---
   const onSubmit = async (data) => {
     try {
       if (editingId) {
-        const res = await axios.put(`http://localhost:5100/api/security/${editingId}`, data);
-        setGuards(guards.map((g) => (g._id === editingId ? res.data : g)));
+        await axios.put(`${"http://localhost:5100/api/security"}/${editingId}`, data);
         alert("Security Guard Updated Successfully!");
       } else {
-        const res = await axios.post("http://localhost:5100/api/security", data);
-        setGuards([...guards, res.data]);
+        await axios.post(API_URL, data);
         alert("Security Guard Added Successfully!");
       }
+      fetchGuards(); 
       closeForm();
     } catch (err) {
       console.error(err);
@@ -42,11 +42,10 @@ export default function Security() {
     }
   };
 
-  // --- DELETE ---
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
     try {
-      await axios.delete(`http://localhost:5100/api/security/${id}`);
+      await axios.delete(`${"http://localhost:5100/api/security"}/${id}`);
       setGuards(guards.filter((g) => g._id !== id));
     } catch (err) {
       alert("Error deleting record.");
@@ -55,9 +54,13 @@ export default function Security() {
 
   const handleEdit = (guard) => {
     setEditingId(guard._id);
-    // Date format fix for input type="date"
-    if(guard.joiningDate) guard.joiningDate = guard.joiningDate.split('T')[0];
-    reset(guard);
+    const editData = { ...guard };
+    
+    if (editData.joiningDate) {
+      editData.joiningDate = new Date(editData.joiningDate).toISOString().split('T')[0];
+    }
+    
+    reset(editData);
     setShowForm(true);
   };
 
@@ -69,9 +72,9 @@ export default function Security() {
 
   const filteredGuards = guards.filter((g) => {
     const searchStr = searchQuery.toLowerCase();
+    const fullName = `${g.firstName || ""} ${g.lastName || ""}`.toLowerCase();
     return (
-      g.firstName?.toLowerCase().includes(searchStr) ||
-      g.lastName?.toLowerCase().includes(searchStr) ||
+      fullName.includes(searchStr) ||
       g.mobile?.includes(searchStr) ||
       g.city?.toLowerCase().includes(searchStr)
     );
@@ -85,7 +88,7 @@ export default function Security() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div>
             <h1 className="text-3xl font-extrabold text-blue-900">Security Management</h1>
-            <p className="text-gray-500 text-sm mt-1">Manage and monitor all security personnel</p>
+            <p className="text-gray-500 text-sm mt-1">Personnel Directory</p>
           </div>
           
           <div className="flex gap-3 w-full md:w-auto">
@@ -104,9 +107,9 @@ export default function Security() {
           </div>
         </div>
 
-        {/* FORM SECTION - Only shows when showForm is true */}
+        {/* FORM SECTION */}
         {showForm && (
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-100 mb-10 transition-all">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-100 mb-10">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold text-gray-800 border-l-4 border-blue-600 pl-3">
                 {editingId ? "Update Guard Details" : "Register New Guard"}
@@ -115,72 +118,35 @@ export default function Security() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Row 1: Basic Info */}
               <div className="grid md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">First Name *</label>
-                  <input {...register("firstName", { required: "Required" })} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Last Name</label>
-                  <input {...register("lastName")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Mobile *</label>
-                  <input {...register("mobile", { required: "Required" })} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Alt Mobile</label>
-                  <input {...register("altMobile")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
+                <FormInput label="First Name *" register={register("firstName", { required: true })} error={errors.firstName} />
+                <FormInput label="Last Name" register={register("lastName")} />
+                <FormInput label="Mobile *" register={register("mobile", { required: true })} error={errors.mobile} />
+                <FormInput label="Alt Mobile" register={register("altMobile")} />
               </div>
 
-              {/* Row 2: Auth & Contact */}
               <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Email</label>
-                  <input type="email" {...register("email")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Password *</label>
-                  <input type="password" {...register("password", { required: !editingId })} placeholder={editingId ? "Leave blank to keep same" : "*******"} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Joining Date</label>
-                  <input type="date" {...register("joiningDate")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
+                <FormInput label="Email" type="email" register={register("email")} />
+                <FormInput 
+                  label="Password *" 
+                  type="password" 
+                  register={register("password", { required: !editingId })} 
+                  placeholder={editingId ? "Leave blank to keep current" : "*******"} 
+                  error={errors.password} 
+                />
+                <FormInput label="Joining Date" type="date" register={register("joiningDate")} />
               </div>
 
-              {/* Row 3: Location */}
-              <div className="grid md:grid-cols-4 gap-4">
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">City</label>
-                  <input {...register("city")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">State</label>
-                  <input {...register("state")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Pincode</label>
-                  <input {...register("pincode")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Address</label>
-                  <input {...register("address")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-              </div>
-
-              {/* Row 4: ID & Shift */}
               <div className="grid md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">ID Type (Aadhar/PAN)</label>
-                  <input {...register("idType")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none bg-white" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">ID Number</label>
-                  <input {...register("idNumber")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none bg-white" />
-                </div>
+                <FormInput label="City" register={register("city")} />
+                <FormInput label="State" register={register("state")} />
+                <FormInput label="Pincode" register={register("pincode")} />
+                <FormInput label="Address" register={register("address")} />
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-4 bg-blue-50/50 p-4 rounded-xl">
+                <FormInput label="ID Type" register={register("idType")} />
+                <FormInput label="ID Number" register={register("idNumber")} />
                 <div>
                   <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Shift</label>
                   <select {...register("shift")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none bg-white">
@@ -197,20 +163,13 @@ export default function Security() {
                 </div>
               </div>
 
-              {/* Row 5: Emergency */}
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Emergency Contact Name</label>
-                  <input {...register("emergencyName")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Emergency Mobile</label>
-                  <input {...register("emergencyMobile")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none" />
-                </div>
+                <FormInput label="Emergency Contact Name" register={register("emergencyName")} />
+                <FormInput label="Emergency Mobile" register={register("emergencyMobile")} />
               </div>
 
               <div className="flex gap-4 pt-6">
-                <button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-10 py-3 rounded-lg font-bold shadow-lg transition-all">
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-lg font-bold shadow-lg transition-all">
                   {editingId ? "UPDATE GUARD" : "CONFIRM & SAVE"}
                 </button>
                 <button type="button" onClick={closeForm} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-10 py-3 rounded-lg font-bold transition-all">
@@ -239,11 +198,9 @@ export default function Security() {
                   <td className="py-4 px-6">
                     <div className="font-bold text-gray-900">{g.firstName} {g.lastName}</div>
                     <div className="text-sm text-blue-600 font-medium">{g.mobile}</div>
-                    <div className="text-xs text-gray-400">{g.email || "No email"}</div>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm font-medium">{g.city}, {g.state}</div>
-                    <div className="text-xs text-gray-500">{g.pincode}</div>
+                  <td className="py-4 px-6 text-sm font-medium">
+                    {g.city}, {g.state}
                   </td>
                   <td className="py-4 px-6">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold mr-2 ${g.shift === 'Day' ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600'}`}>
@@ -258,8 +215,8 @@ export default function Security() {
                     <div className="text-xs text-gray-500">{g.idNumber}</div>
                   </td>
                   <td className="py-4 px-6 text-right space-x-2">
-                    <button onClick={() => handleEdit(g)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all font-bold">Edit</button>
-                    <button onClick={() => handleDelete(g._id)} className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-all font-bold">Delete</button>
+                    <button onClick={() => handleEdit(g)} className="text-blue-600 hover:underline font-bold">Edit</button>
+                    <button onClick={() => handleDelete(g._id)} className="text-red-500 hover:underline font-bold">Delete</button>
                   </td>
                 </tr>
               ))}
@@ -267,6 +224,20 @@ export default function Security() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FormInput({ label, type = "text", register, error, placeholder }) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-gray-600 uppercase mb-1">{label}</label>
+      <input 
+        type={type} 
+        {...register} 
+        placeholder={placeholder}
+        className={`w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none ${error ? 'border-red-500' : 'border-gray-200'}`} 
+      />
     </div>
   );
 }

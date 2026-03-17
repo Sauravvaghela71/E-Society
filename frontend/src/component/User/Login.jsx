@@ -8,35 +8,35 @@ export default function Login() {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const submitHandler = async (data) => {
+  const submitHandler = async (formData) => {
     try {
-      const res = await axios.post("http://localhost:5100/api/login", data);
+      const res = await axios.post("http://localhost:5100/api/user/login", formData);
       
       if (res.status === 200) {
         toast.success("Login Success");
         
-        // Backend se Token aur User data nikalna
-        const token = res.data.token; 
-        const userData = res.data.user || res.data.data || res.data;
+        // Ensure data exists
+        const userData = res.data.data;
 
-        // LocalStorage me set karna
-        localStorage.setItem("user_token", token); // JWT Token
+        // Save exactly what Header is looking for
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("isLoggedIn", "true");
 
         const userRole = userData.role?.toLowerCase();
 
-        // Redirect Logic
+        // Redirect based on role
         if (userRole === "admin") {
           navigate("/admin/dashboard");
         } else if (userRole === "user" || userRole === "resident") {
           navigate("/user");
         } else if (userRole === "guard" || userRole === "security") {
-          navigate("/guard"); // Guard redirect
+          navigate("/security/dashboard");
         } else {
-          toast.warning("Role not defined");
-          navigate("/login");
+          navigate("/");
         }
+
+        // Force a window reload to let Header pick up the fresh LocalStorage data
+        window.location.reload();
       }
     } catch (err) {
       console.error("Login Error:", err.response?.data);
@@ -57,17 +57,23 @@ export default function Login() {
           <form onSubmit={handleSubmit(submitHandler)} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
-              <input type="email" placeholder="Enter your email" className={`w-full p-3 border rounded-xl outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} {...register("email", { required: "Email is required" })} />
+              <input type="email" placeholder="Enter your email" 
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} 
+                {...register("email", { required: "Email is required" })} 
+              />
               {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
-              <input type="password" placeholder="Enter your password" className={`w-full p-3 border rounded-xl outline-none transition ${errors.password ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} {...register("password", { required: "Password is required" })} />
+              <input type="password" placeholder="Enter your password" 
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.password ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} 
+                {...register("password", { required: "Password is required" })} 
+              />
               {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message}</p>}
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">Login Now</button>
-            <div className="pt-4 text-center border-t border-gray-100">
-            </div>
+            <button type="submit" className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+              Login Now
+            </button>
           </form>
         </div>
       </div>

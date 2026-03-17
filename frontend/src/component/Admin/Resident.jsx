@@ -7,7 +7,7 @@ export default function ResidentForm() {
   const [user, setUser] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [editId, setEditId] = useState(null);
-
+  const [preview, setPreview] = useState(null);
   const {
     register,
     handleSubmit,
@@ -15,46 +15,48 @@ export default function ResidentForm() {
     formState: { errors }
   } = useForm();
 
-  // 1. FETCH ALL RESIDENTS
-  const fetchResidents = async () => {
-    try {
-      const res = await axios.get("http://localhost:5100/api/residents");
-      // Backend agar { data: [...] } bhej raha hai toh res.data.data use karein
-      const data = Array.isArray(res.data) ? res.data : res.data.data || [];
-      setUser(data);
-    } catch (error) {
-      console.error("Fetch error:", error);
+  // 1. Image Preview logic
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
     }
   };
 
-  useEffect(() => {
-    fetchResidents();
-  }, []);
-
-  // 2. SUBMIT LOGIC (ADD & UPDATE)
+  // 2. SUBMIT LOGIC (ADD & UPDATE FIXED)
   const onSubmit = async (data) => {
     try {
-      const cleanData = { ...data };
+      // FIX: FormData Object banana padega image ke liye
+      const formData = new FormData();
 
-      // Empty values ko remove karna taki DB validation error na de
-      Object.keys(cleanData).forEach((key) => {
-        if (cleanData[key] === "" || cleanData[key] === null) delete cleanData[key];
+      // Saare text fields ko append karein
+      Object.keys(data).forEach((key) => {
+        // "idProof" aapki file input ka 'name' hona chahiye register() mein
+        if (key !== "idProof") {
+          if (data[key] !== "" && data[key] !== null) {
+            formData.append(key, data[key]);
+          }
+        }
       });
+
+      // File ko manually append karein (FileList se first file nikal kar)
+      if (data.idProof && data.idProof[0]) {
+        formData.append("idProof", data.idProof[0]);
+      }
+
+      const config = {
+        headers: { "Content-Type": "multipart/form-data" }
+      };
 
       if (editId) {
         // --- UPDATE LOGIC ---
-        // Internal fields ko body se nikalna zaroori hai
-        const { _id, __v, createdAt, updatedAt, ...updateBody } = cleanData;
-        
-        const res = await axios.put(`http://localhost:5100/api/residents/${editId}`, updateBody);
-        
+        const res = await axios.put(`http://localhost:5100/api/residents/${editId}`, formData, config);
         const updatedObj = res.data.data || res.data;
         setUser((prev) => prev.map((u) => (u._id === editId ? updatedObj : u)));
         alert("Resident Updated Successfully!");
       } else {
         // --- CREATE LOGIC ---
-        const res = await axios.post("http://localhost:5100/api/residents", cleanData);
-        
+        const res = await axios.post("http://localhost:5100/api/residents", formData, config);
         const newObj = res.data.data || res.data;
         setUser((prev) => [...prev, newObj]);
         alert("Resident Added Successfully!");
@@ -81,18 +83,17 @@ export default function ResidentForm() {
   // 4. EDIT HELPER (Mapping data to form)
   const handleEdit = (resident) => {
     setEditId(resident._id);
-    
-    // Date formatting: Backend se aane wali date ko 'YYYY-MM-DD' mein convert karna
+
     const formattedResident = { ...resident };
     const dateFields = ["dateOfBirth", "moveInDate", "moveOutDate"];
-    
+
     dateFields.forEach(field => {
       if (resident[field]) {
         formattedResident[field] = new Date(resident[field]).toISOString().split('T')[0];
       }
     });
 
-    reset(formattedResident); 
+    reset(formattedResident);
     setShowForm(true);
   };
 
@@ -115,7 +116,7 @@ export default function ResidentForm() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 min-h-screen">
-      
+
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-5 rounded-xl shadow-sm border">
         <h1 className="text-2xl font-bold text-gray-800">Resident Management</h1>
@@ -163,8 +164,8 @@ export default function ResidentForm() {
             <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Contact Information</h2>
             <div className="grid md:grid-cols-2 gap-5">
               <Input label="Mobile Number" required error={errors.mobileNumber} register={register("mobileNumber", { required: "Mobile required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid 10 digit number" } })} />
-              <Input label="Email" error={errors.email} register={register("email",{required: "Email required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
-              
+              <Input label="Email" error={errors.email} register={register("email", { required: "Email required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
+
               {/* Password field only for New Registration */}
               {!editId && (
                 <Input label="Password" type="password" required error={errors.password} register={register("password", { required: "Password required" })} />
@@ -194,13 +195,52 @@ export default function ResidentForm() {
 
           {/* Identity & Vehicle */}
           <div className="grid md:grid-cols-2 gap-6">
+            {/* Identity Details */}
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
-              <div className="grid md:grid-cols-2 gap-5">
-                <Select label="ID Proof Type" register={register("idProofType")} options={["Aadhaar", "PAN", "Voter ID"]} />
-                <Input label="ID Proof Number" register={register("idProofNumber", { required: "ID proof number required" })} />
+              <div className="grid md:grid-cols-1 gap-5">
+                <Select
+                  label="ID Proof Type"
+                  register={register("idProofType")}
+                  options={["Aadhaar", "PAN", "Voter ID"]}
+                />
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-gray-600 uppercase">Upload ID Proof Photo</label>
+                  <div className="relative group">
+                    <div className="w-full h-48 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+                      {preview || user.idProof ? (
+                        <img
+                          src={preview || user.idProof}
+                          alt="ID Proof Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-sm">No image selected</span>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      {...register("idProof")} 
+                      onChange={(e) => {
+                        register("idProof").onChange(e);
+                        handleImageChange(e);
+                      }}
+                    />
+
+                    <div className="mt-2 text-center">
+                      <span className="text-blue-600 text-sm font-semibold hover:underline">
+                        Click to change photo
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Vehicle Details */}
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Vehicle Details</h2>
               <Input label="Vehicle Number" register={register("vehicleNumber")} />
@@ -213,7 +253,7 @@ export default function ResidentForm() {
               <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
               <div className="grid md:grid-cols-2 gap-5">
                 <Input label="Name" register={register("emergencyContactName", { required: "Emergency contact name required" })} />
-                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber",{ required: "Emergency contact number required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
+                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber", { required: "Emergency contact number required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
               </div>
             </div>
             <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
@@ -282,10 +322,10 @@ function Input({ label, register, error, required, type = "text" }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
-      <input 
-        type={type} 
-        {...register} 
-        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`} 
+      <input
+        type={type}
+        {...register}
+        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
       />
       {error && <p className="text-red-500 text-xs mt-1 font-medium">{error.message}</p>}
     </div>
@@ -297,8 +337,8 @@ function Select({ label, register, options, error, required }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
-      <select 
-        {...register} 
+      <select
+        {...register}
         className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm bg-white ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
       >
         <option value="">Select...</option>

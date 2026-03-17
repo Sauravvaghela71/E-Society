@@ -1,39 +1,79 @@
 const Resident = require("../Model/ResidentModel");
 const bcrypt = require("bcrypt");
+const uploadToCloudinary = require("../Util/CloudinaryUtil")
 const mailSend = require("../Util/MailSend");
-
+const User = require('../Model/UserModel')
 /* ---------------- CREATE RESIDENT (With Hashing & Email) ---------------- */
+
 exports.createResident = async (req, res) => {
   try {
-    const { email, password, firstName } = req.body;
+    const { email, password, firstName, lastName } = req.body;
 
-    // 1. Password hashing (10 salt rounds)
+    // 1. Validation: Check if image was uploaded
+    // This prevents the "Cannot read properties of undefined (reading 'path')" 500 error
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an ID proof photo" });
+    }
+
+    // 2. Security: Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 2. Save resident with hashed password
+    // 3. Image Upload: Send to Cloudinary
+    // Assuming uploadToCloudinary is your helper function
+    const cloudinaryResponse = await uploadToCloudinary(req.file.path);
+
+    // 4. Create Resident Record
+    // We create the instance first to generate the _id
     const resident = new Resident({
       ...req.body,
-      password: hashedPassword
+      password: hashedPassword,
+      idProofImagePath: cloudinaryResponse.secure_url
     });
 
-    await resident.save();
+    // 5. Create User Record (Auth Table)
+    // Linked via profileid and the 'role' field (refPath)
+    const user = new User({
+      Name: `${firstName} ${lastName || ""}`.trim(), 
+      email: email,
+      password: hashedPassword,
+      role: "resident", // This matches your refPath logic
+      profileid: resident._id, 
+      status: "active"
+    });
 
-    // 3. Send Welcome Email
-    mailSend(
-      email,
-      "Welcome to Society Management",
-      `Hello ${firstName}, your account has been created successfully. You can now login with your email: ${email} and password: ${password}`
-    );
+    // 6. Save Both Documents
+    // Using Promise.all so both must succeed together
+    await Promise.all([user.save(), resident.save()]);
 
+    // 7. Communication: Send Welcome Email
+    // We send the plain 'password' so the user knows what they chose
+    try {
+      await mailSend(
+        email,
+        "Welcome to Society Management",
+        `Hello ${firstName}, your account has been created successfully. 
+         Email: ${email}
+         Password: ${password}`
+      );
+    } catch (mailError) {
+      console.error("Email failed, but user was created:", mailError);
+    }
+
+    // 8. Success Response
     res.status(201).json({
-      message: "Resident created successfully",
+      message: "Resident and Auth account created successfully",
       data: resident
     });
+
   } catch (error) {
+    console.error("Internal Server Error:", error);
+
+    // Handle Duplicate Email Error (MongoDB Code 11000)
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Resident already exists" });
+      return res.status(400).json({ message: "This email is already registered." });
     }
-    res.status(500).json({ message: error.message });
+
+    res.status(500).json({ message: "Internal Server Error: " + error.message });
   }
 };
 

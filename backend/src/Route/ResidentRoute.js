@@ -1,5 +1,6 @@
 const express = require("express")
 const router = express.Router();
+const upload = require("../Middleware/uploadMiddleware")
 
 const {
   createResident,
@@ -12,7 +13,7 @@ const {
 
 
 /* ---------------- CREATE RESIDENT ---------------- */
-router.post("/", createResident);
+router.post("/",upload.single("idProof"), createResident);
 
 
 /* ---------------- GET ALL RESIDENTS ---------------- */
