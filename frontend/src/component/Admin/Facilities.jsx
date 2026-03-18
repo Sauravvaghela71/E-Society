@@ -11,6 +11,7 @@ export default function Facilities() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [adminResponseText, setAdminResponseText] = useState("");
 
   const API_URL = "http://localhost:5100/api/facilities";
 
@@ -60,11 +61,12 @@ export default function Facilities() {
 
   const handleUpdateBookingStatus = async (id, status) => {
     try {
-      await axios.put(`${API_URL}/bookings/${id}/status`, { status });
-      // update state
-      setBookings(bookings.map(b => b._id === id ? { ...b, status } : b));
+      await axios.put(`${API_URL}/bookings/${id}/status`, { status, adminResponse: adminResponseText });
+      // update state locally
+      setBookings(bookings.map(b => b._id === id ? { ...b, status, adminResponse: adminResponseText } : b));
       if (selectedRequest && selectedRequest._id === id) {
         setSelectedRequest(null);
+        setAdminResponseText("");
       }
     } catch (err) {
       alert("Failed to update booking status.");
@@ -256,7 +258,7 @@ export default function Facilities() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="p-3 border rounded-xl">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Facility Requested</p>
                     <p className="font-black text-gray-800 mt-1">{selectedRequest.facility?.name}</p>
@@ -277,6 +279,19 @@ export default function Facilities() {
                 </div>
               </div>
 
+              {selectedRequest.status === "Pending" && (
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Admin Response (Reason, Notes, etc)</label>
+                  <textarea 
+                    value={adminResponseText}
+                    onChange={(e) => setAdminResponseText(e.target.value)}
+                    rows={3} 
+                    placeholder="E.g. Approved, please collect keys from guard..." 
+                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none resize-none"
+                  ></textarea>
+                </div>
+              )}
+
               <div className="flex gap-4">
                 {selectedRequest.status === "Pending" ? (
                   <>
@@ -288,7 +303,7 @@ export default function Facilities() {
                     </button>
                   </>
                 ) : (
-                  <button onClick={() => setSelectedRequest(null)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 rounded-xl transition-all uppercase tracking-wider">
+                  <button onClick={() => { setSelectedRequest(null); setAdminResponseText(""); }} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 rounded-xl transition-all uppercase tracking-wider">
                     Close Details (Currently {selectedRequest.status})
                   </button>
                 )}

@@ -23,6 +23,7 @@ import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
 import UserDashboard from "../component/User/UserDashboard";
 import UserComplaint from "../component/User/Complain";
+import UserVisitor from "../component/User/Visitor";
 import FlatDetails from "../component/Admin/FlatDetails";
 import GuardLayout from "../component/Guard/GuardLayout";
 import GuardDashboard from "../component/Guard/GuardDashboard";
@@ -146,7 +147,11 @@ const router = createBrowserRouter([
       },
       {
         path:"complaint",
-        element:<div>User Complaint page</div>
+        element: <UserComplaint />
+      },
+      {
+        path: "visitor",
+        element: <UserVisitor />
       },
       {
         path: "facilities",

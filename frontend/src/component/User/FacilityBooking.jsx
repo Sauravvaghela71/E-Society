@@ -238,7 +238,7 @@ export default function FacilityBooking() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <h3 className="font-bold text-gray-800">{b.facility?.name || "Deleted Facility"}</h3>
-                        <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full ${b.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full ${b.status === 'Confirmed' ? 'bg-green-100 text-green-700' : b.status === 'Pending' ? 'bg-orange-100 text-orange-700 animate-pulse' : 'bg-red-100 text-red-700'}`}>
                           {b.status}
                         </span>
                       </div>
@@ -246,6 +246,12 @@ export default function FacilityBooking() {
                         <Clock size={12}/> {b.timeSlot}
                       </p>
                       <p className="text-xs font-bold text-blue-600 mt-2">Paid: ₹{b.amountPaid}</p>
+                      {b.adminResponse && (
+                        <div className="mt-3 bg-gray-50 border-l-4 border-blue-400 p-2 rounded-r-lg">
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Admin Note</p>
+                          <p className="text-xs text-gray-700 font-medium">{b.adminResponse}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
