@@ -22,6 +22,8 @@ import UserProfile from "../component/User/UserProfile";
 import UserDashboard from "../component/User/UserDashboard";
 import UserComplaint from "../component/User/Complain";
 import FlatDetails from "../component/Admin/FlatDetails";
+import GuardLayout from "../component/Guard/GuardLayout";
+import GuardDashboard from "../component/Guard/GuardDashboard";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
@@ -142,6 +144,32 @@ const router = createBrowserRouter([
       }
 
     ]
+  },
+
+  // 3. GUARD / SECURITY ROUTES
+  {
+    path: "/security",
+    element: (
+      <ProtectedRoute>
+        <GuardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <GuardDashboard /> },
+      { path: "dashboard", element: <GuardDashboard /> }
+    ]
+  },
+  {
+    path: "/guard",
+    element: (
+      <ProtectedRoute>
+        <GuardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <GuardDashboard /> },
+      { path: "dashboard", element: <GuardDashboard /> }
+    ]
   }
 
 ]);
@@ -150,4 +178,4 @@ const AppRouter = () => {
   return <RouterProvider router={router} />;
 };
 
-export default AppRouter;
+export default AppRouter;
