@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   FaSignOutAlt, FaTachometerAlt, FaUsers, FaTools, 
   FaShieldAlt, FaUserClock, FaExclamationCircle, 
-  FaRupeeSign, FaBuilding, FaWallet 
+  FaRupeeSign, FaBuilding, FaWallet, FaCalendarAlt
 } from "react-icons/fa";
 
 export default function AdminSidebar() {
@@ -84,6 +84,12 @@ export default function AdminSidebar() {
               icon={<FaExclamationCircle />} 
               label="Complaints" 
               active={isActive("/admin/complain")} 
+            />
+            <SidebarLink 
+              to="/admin/facilities" 
+              icon={<FaCalendarAlt />} 
+              label="Facilities" 
+              active={isActive("/admin/facilities")} 
             />
             <SidebarLink 
               to="/admin/expense" 

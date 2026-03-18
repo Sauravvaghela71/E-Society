@@ -89,7 +89,12 @@ const Header = () => {
                 </>
               )}
               {isSecurity && <Link to="/security/dashboard" className="flex items-center gap-2 hover:text-blue-600"><ShieldCheck size={14} /> Guard Desk</Link>}
-              {isUser && <Link to="/user" className="flex items-center gap-2 hover:text-blue-600"><Home size={14} /> My Dashboard</Link>}
+              {isUser && (
+                <>
+                  <Link to="/user" className="flex items-center gap-2 hover:text-blue-600"><Home size={14} /> My Dashboard</Link>
+                  <Link to="/user/facilities" className="flex items-center gap-2 hover:text-blue-600"><CreditCard size={14} /> Amenities</Link>
+                </>
+              )}
             </div>
 
             {/* Profile Capsule + Dropdown */}

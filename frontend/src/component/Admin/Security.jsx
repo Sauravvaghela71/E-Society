@@ -85,7 +85,7 @@ export default function Security() {
       <div className="max-w-7xl mx-auto">
         
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex flex-col md:flex-vrow justify-between items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div>
             <h1 className="text-3xl font-extrabold text-blue-900">Security Management</h1>
             <p className="text-gray-500 text-sm mt-1">Personnel Directory</p>

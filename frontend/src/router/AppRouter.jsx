@@ -16,6 +16,8 @@ import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
 import AdminComplaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
+import Facilities from "../component/Admin/Facilities";
+import FacilityBooking from "../component/User/FacilityBooking";
 import HomePage from "../component/User/HomePage";
 import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
@@ -63,6 +65,10 @@ const router = createBrowserRouter([
       {
         path: "maintainancesetting",
         element: <MaintainanceSetting />
+      },
+      {
+        path: "facilities",
+        element: <Facilities />
       },
         {
         path: "visitor",
@@ -140,9 +146,12 @@ const router = createBrowserRouter([
       },
       {
         path:"complaint",
-        element:<UserComplaint/>
+        element:<div>User Complaint page</div>
+      },
+      {
+        path: "facilities",
+        element: <FacilityBooking />
       }
-
     ]
   },
 
