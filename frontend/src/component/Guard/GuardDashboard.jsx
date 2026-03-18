@@ -373,6 +373,19 @@ function VisitorLogTab({ visitors, onCheckout }) {
 
   const purposeEmoji = { Delivery: "📦", Guest: "👤", Service: "🔧", Cab: "🚕", Courier: "📬" };
 
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case "Pending":
+        return { text: "⏳ Pending Approval", badge: "bg-orange-100 text-orange-700 font-bold", border: "border-orange-200 shadow-sm shadow-orange-50 bg-orange-50/10" };
+      case "inside":
+        return { text: "🟢 Inside", badge: "bg-green-100 text-green-700 font-bold", border: "border-green-200 shadow-sm shadow-green-50 bg-white" };
+      case "Exited":
+        return { text: "🔴 Exited", badge: "bg-gray-100 text-gray-500 font-medium", border: "border-gray-100 opacity-70 bg-white" };
+      default:
+        return { text: status, badge: "bg-gray-100 text-gray-800", border: "" };
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -384,49 +397,53 @@ function VisitorLogTab({ visitors, onCheckout }) {
         <EmptyState emoji="🔒" text="No visitors logged today" />
       ) : (
         <div className="space-y-3">
-          {visitors.map((v) => (
-            <div key={v._id} className={`bg-white rounded-2xl border p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${v.status === "inside" ? "border-green-200 shadow-sm shadow-green-50" : "border-gray-100 opacity-70"}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-2xl">
-                  {purposeEmoji[v.purpose] || "🙂"}
+          {visitors.map((v) => {
+            const styles = getStatusStyles(v.status);
+            return (
+              <div key={v._id} className={`rounded-2xl border p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${styles.border}`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/60 border border-gray-100 flex items-center justify-center text-2xl shadow-sm">
+                    {purposeEmoji[v.purpose] || "🙂"}
+                  </div>
+                  <div>
+                    <p className="font-black text-gray-800">{v.visitorName || "—"}</p>
+                    <p className="text-sm text-gray-500">
+                      {v.mobileNumber || "—"} · Wing {v.blockWing || "?"}, Flat {v.flatNumber || "?"}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {v.purpose || "Visit"} · Entry:{" "}
+                      {v.entryTime
+                        ? new Date(v.entryTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+                        : "—"}
+                      {v.exitTime
+                        ? ` · Exit: ${new Date(v.exitTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                        : ""}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-black text-gray-800">{v.visitorName || "—"}</p>
-                  <p className="text-sm text-gray-500">
-                    {v.mobileNumber || "—"} · Wing {v.blockWing || "?"}, Flat {v.flatNumber || "?"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {v.purpose || "Visit"} · Entry:{" "}
-                    {v.entryTime
-                      ? new Date(v.entryTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
-                      : "—"}
-                    {v.exitTime
-                      ? ` · Exit: ${new Date(v.exitTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
-                      : ""}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1.5 rounded-full text-xs ${styles.badge}`}>
+                    {styles.text}
+                  </span>
+                  {v.status === "inside" && (
+                    <button
+                      onClick={() => handleCheckout(v._id)}
+                      disabled={checkingOut === v._id}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors"
+                    >
+                      {checkingOut === v._id ? <Loader size={14} className="animate-spin" /> : <LogOut size={14} />} Check Out
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${v.status === "inside" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                  {v.status === "inside" ? "🟢 Inside" : "🔴 Exited"}
-                </span>
-                {v.status === "inside" && (
-                  <button
-                    onClick={() => handleCheckout(v._id)}
-                    disabled={checkingOut === v._id}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors"
-                  >
-                    {checkingOut === v._id ? <Loader size={14} className="animate-spin" /> : <LogOut size={14} />} Check Out
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+
 
 // ─── RESIDENTS TAB ───────────────────────────────────────────────────────────
 function ResidentsTab({ residents }) {
@@ -482,23 +499,57 @@ function ResidentsTab({ residents }) {
 
 // ─── NOTICES TAB ─────────────────────────────────────────────────────────────
 function NoticesTab({ notices }) {
+  // Only show Active notices
+  const activeNotices = notices.filter(n => n.status === 'Active');
+
+  const getPriorityStyle = (priority) => {
+    if (priority === "High") return "bg-red-100 text-red-700 border-red-200";
+    if (priority === "medium") return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    return "bg-green-100 text-green-700 border-green-200";
+  };
+
+  const isNew = (dateString) => {
+    return new Date(dateString).toDateString() === new Date().toDateString();
+  };
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-black text-gray-800">Notices from Admin</h2>
-      {notices.length === 0 ? (
-        <EmptyState emoji="📋" text="No notices at the moment" />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-black text-gray-800">Society Notices</h2>
+        <span className="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-lg">
+          {activeNotices.length} Live Updates
+        </span>
+      </div>
+
+      {activeNotices.length === 0 ? (
+        <EmptyState emoji="📋" text="No active notices from admin at the moment" />
       ) : (
         <div className="space-y-4">
-          {notices.map((n) => (
-            <div key={n._id} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-all">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="font-black text-gray-800 text-lg">{n.title || n.subject || "Notice"}</p>
-                  <p className="text-gray-500 mt-2 leading-relaxed">{n.description || n.body || n.content}</p>
-                </div>
-                <span className="text-xs text-gray-400 font-semibold whitespace-nowrap">
-                  {n.createdAt ? new Date(n.createdAt).toLocaleDateString("en-IN") : ""}
+          {activeNotices.map((n) => (
+            <div key={n._id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all flex flex-col relative overflow-hidden group">
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${n.priority === "High" ? "bg-red-500" : n.priority === "medium" ? "bg-yellow-400" : "bg-green-500"}`} />
+              
+              <div className="pl-2 flex justify-between items-start mb-3">
+                <span className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-md border ${getPriorityStyle(n.priority)}`}>
+                  {n.priority}
                 </span>
+                
+                {isNew(n.noticeDate) && (
+                  <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600 bg-blue-50 border border-blue-100 shadow-sm px-2 py-1 rounded-md animate-pulse">
+                     New Today
+                  </span>
+                )}
+              </div>
+              
+              <div className="pl-2">
+                <h3 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight">{n.title || n.subject}</h3>
+                <p className="text-gray-500 mt-2 leading-relaxed text-sm md:text-base border-l-2 border-gray-100 pl-3 italic">
+                  "{n.description || n.content}"
+                </p>
+                <div className="mt-4 flex items-center gap-2 text-xs font-bold text-gray-400">
+                  <Clock size={14} />
+                  Published: {new Date(n.noticeDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
+                </div>
               </div>
             </div>
           ))}
