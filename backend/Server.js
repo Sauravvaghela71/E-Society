@@ -17,6 +17,7 @@ const notice = require("./src/Route/NoticeRoute");
 const visitor = require("./src/Route/VisitorRoute");
 const totalExpense = require("./src/Route/TotalExpenseRoute");
 const facility = require("./src/Route/FacilityRoute");
+const flat = require("./src/Route/FlatRoute");
 
 /* DATABASE */
 
@@ -40,6 +41,7 @@ app.use("/api/notice", notice);
 app.use("/api/visitor", visitor);
 app.use("/api/totalExpense", totalExpense);
 app.use("/api/facilities", facility);
+app.use("/api/flats", flat);
 
 /* TEST */
 

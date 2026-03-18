@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const uploadToCloudinary = require("../Util/CloudinaryUtil")
 const mailSend = require("../Util/MailSend");
 const User = require('../Model/UserModel')
+const Flat = require("../Model/FlatModel");
 /* ---------------- CREATE RESIDENT (With Hashing & Email) ---------------- */
 
 exports.createResident = async (req, res) => {
@@ -44,6 +45,16 @@ exports.createResident = async (req, res) => {
     // 6. Save Both Documents
     // Using Promise.all so both must succeed together
     await Promise.all([user.save(), resident.save()]);
+
+    // 6b. Update the Flat Table Status
+    try {
+        await Flat.findOneAndUpdate(
+            { wing: req.body.wing, flatNumber: req.body.flatNumber },
+            { status: "Occupied", residentId: resident._id }
+        );
+    } catch (flatErr) {
+        console.error("Flat marking error, ignoring to continue", flatErr);
+    }
 
     // 7. Communication: Send Welcome Email
     // We send the plain 'password' so the user knows what they chose
@@ -136,7 +147,19 @@ exports.deleteResident = async (req, res) => {
     if (!resident) {
       return res.status(404).json({ message: "Resident not found" });
     }
-    res.status(200).json({ message: "Resident deleted successfully" });
+
+    // Delete Auth Account Linked
+    await User.findOneAndDelete({ profileid: req.params.id });
+
+    // Mark Flat Vacant Again
+    try {
+        await Flat.findOneAndUpdate(
+            { wing: resident.wing, flatNumber: resident.flatNumber },
+            { status: "Vacant", residentId: null }
+        );
+    } catch(e){}
+
+    res.status(200).json({ message: "Resident successfully deleted, Flat marked Vacant" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
