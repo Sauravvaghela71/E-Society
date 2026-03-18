@@ -42,44 +42,77 @@ export default function GuardDashboard() {
   const [residents, setResidents] = useState([]);
   const [visitors, setVisitors] = useState([]);
   const [notices, setNotices] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const guardInfo = JSON.parse(localStorage.getItem("user") || "{}");
+  const guardInfo = (() => {
+    try { return JSON.parse(localStorage.getItem("user") || "{}"); }
+    catch { return {}; }
+  })();
 
   useEffect(() => {
-    fetchResidents();
-    fetchVisitors();
-    fetchNotices();
+    setLoading(true);
+    Promise.allSettled([
+      fetchResidents(),
+      fetchVisitors(),
+      fetchNotices()
+    ]).finally(() => setLoading(false));
   }, []);
 
   const fetchResidents = async () => {
     try {
       const res = await axios.get(`${API}/residents`);
-      setResidents(res.data?.data || res.data || []);
+      // Backend returns plain array directly
+      const data = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data ?? res.data?.residents ?? []);
+      setResidents(data);
     } catch (e) {
       console.error("Resident fetch error:", e);
+      toast.error("Could not load residents list");
     }
   };
 
   const fetchVisitors = async () => {
     try {
       const res = await axios.get(`${API}/visitor`);
-      setVisitors(res.data?.data || res.data || []);
+      // VisitorController returns { success, count, data: [...] }
+      const data = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data ?? []);
+      setVisitors(data);
     } catch (e) {
       console.error("Visitor fetch error:", e);
+      toast.error("Could not load visitor log");
     }
   };
 
   const fetchNotices = async () => {
     try {
       const res = await axios.get(`${API}/notice`);
-      setNotices(res.data?.data || res.data || []);
+      const data = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data ?? res.data?.notices ?? []);
+      setNotices(data);
     } catch (e) {
       console.error("Notice fetch error:", e);
+      // Non-critical — guard doesn't need notices to function
     }
   };
 
-  const insideNow = visitors.filter((v) => v.status === "inside");
+  // Always guard: insideNow only if visitors is a real array
+  const insideNow = Array.isArray(visitors)
+    ? visitors.filter((v) => v?.status === "inside")
+    : [];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] gap-3 text-gray-400">
+        <Loader size={28} className="animate-spin text-blue-500" />
+        <p className="text-lg font-semibold">Loading Guard Dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -358,11 +391,18 @@ function VisitorLogTab({ visitors, onCheckout }) {
                   {purposeEmoji[v.purpose] || "🙂"}
                 </div>
                 <div>
-                  <p className="font-black text-gray-800">{v.visitorName}</p>
-                  <p className="text-sm text-gray-500">{v.mobileNumber} · Wing {v.blockWing}, Flat {v.flatNumber}</p>
+                  <p className="font-black text-gray-800">{v.visitorName || "—"}</p>
+                  <p className="text-sm text-gray-500">
+                    {v.mobileNumber || "—"} · Wing {v.blockWing || "?"}, Flat {v.flatNumber || "?"}
+                  </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {v.purpose} · Entry: {v.entryTime ? new Date(v.entryTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}
-                    {v.exitTime && ` · Exit: ${new Date(v.exitTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`}
+                    {v.purpose || "Visit"} · Entry:{" "}
+                    {v.entryTime
+                      ? new Date(v.entryTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+                      : "—"}
+                    {v.exitTime
+                      ? ` · Exit: ${new Date(v.exitTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`
+                      : ""}
                   </p>
                 </div>
               </div>

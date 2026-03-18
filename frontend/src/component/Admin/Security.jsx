@@ -31,7 +31,7 @@ export default function Security() {
         await axios.put(`${"http://localhost:5100/api/security"}/${editingId}`, data);
         alert("Security Guard Updated Successfully!");
       } else {
-        await axios.post(API_URL, data);
+        await axios.post("http://localhost:5100/api/security", data);
         alert("Security Guard Added Successfully!");
       }
       fetchGuards(); 

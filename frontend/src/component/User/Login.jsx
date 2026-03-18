@@ -1,52 +1,52 @@
 import axios from "axios";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const submitHandler = async (formData) => {
+    setIsLoading(true);
     try {
       const res = await axios.post("http://localhost:5100/api/user/login", formData);
-      
+
       if (res.status === 200) {
-        toast.success("Login Success");
-        
         const userData = res.data.data;
-
-        // Save exactly what Header and ProtectedRoute are looking for
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("role", userData.role || "user");
-        localStorage.setItem("user", JSON.stringify(userData));
-
         const userRole = (userData.role || "user").toLowerCase();
 
-        // Redirect based on role
-        if (userRole === "admin") {
-          navigate("/admin/dashboard");
-        } else if (userRole === "user" || userRole === "resident") {
-          navigate("/user");
-        } else if (userRole === "guard" || userRole === "security") {
-          navigate("/security/dashboard");
-        } else {
-          navigate("/");
-        }
+        // Persist session to localStorage BEFORE navigating
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", userRole);
+        localStorage.setItem("user", JSON.stringify(userData));
 
-        // Force a window reload to let AppRouter / Header pick up the fresh LocalStorage data
-        // Delaying reload slightly to ensure React Router navigates first
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        toast.success("Login Successful! Redirecting...");
+
+        // Navigate with full reload so all components re-read fresh localStorage
+        if (userRole === "admin") {
+          window.location.href = "/admin/dashboard";
+        } else if (userRole === "resident" || userRole === "user") {
+          // Both 'resident' and legacy 'user' roles go to user dashboard
+          window.location.href = "/user";
+        } else if (userRole === "security" || userRole === "guard") {
+          window.location.href = "/security/dashboard";
+        } else {
+          // Unknown role — still try user dashboard
+          window.location.href = "/user";
+        }
       }
     } catch (err) {
       console.error("Login Error:", err.response?.data);
       toast.error(err.response?.data?.message || "Invalid Email or Password");
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -75,8 +75,20 @@ export default function Login() {
               />
               {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message}</p>}
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
-              Login Now
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Logging in...
+                </>
+              ) : "Login Now"}
             </button>
           </form>
         </div>
