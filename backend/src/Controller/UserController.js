@@ -88,6 +88,8 @@
 const userSchema = require("../Model/UserModel");
 const bcrypt = require("bcrypt");
 const mailSend = require("../Util/MailSend");
+const jwt = require("jsonwebtoken")
+const secret = "secret"
 
 const registerUser = async (req, res) => {
     try {
@@ -116,9 +118,15 @@ const loginUser = async (req, res) => {
         if (foundUserFromEmail) {
             const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
 
+
             if (isPasswordMatched) {
+
+           const token = jwt.sign(foundUserFromEmail.toObject(),secret)
+
+
                 res.status(200).json({
                     message: "Login Success",
+                    token:token,
                     data: {
                         _id: foundUserFromEmail._id,
                         email: foundUserFromEmail.email,

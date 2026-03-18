@@ -15,14 +15,15 @@ export default function Login() {
       if (res.status === 200) {
         toast.success("Login Success");
         
-        // Ensure data exists
         const userData = res.data.data;
 
-        // Save exactly what Header is looking for
-        localStorage.setItem("user", JSON.stringify(userData));
+        // Save exactly what Header and ProtectedRoute are looking for
         localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", userData.role || "user");
+        localStorage.setItem("user", JSON.stringify(userData));
 
-        const userRole = userData.role?.toLowerCase();
+        const userRole = (userData.role || "user").toLowerCase();
 
         // Redirect based on role
         if (userRole === "admin") {
@@ -35,8 +36,11 @@ export default function Login() {
           navigate("/");
         }
 
-        // Force a window reload to let Header pick up the fresh LocalStorage data
-        window.location.reload();
+        // Force a window reload to let AppRouter / Header pick up the fresh LocalStorage data
+        // Delaying reload slightly to ensure React Router navigates first
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
     } catch (err) {
       console.error("Login Error:", err.response?.data);
