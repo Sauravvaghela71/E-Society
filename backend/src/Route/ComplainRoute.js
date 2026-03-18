@@ -7,6 +7,9 @@ router.route("/")
     .post(complainController.createComplain)
     .get(complainController.getAllComplains);
 
+// Route for complaints by a specific userId
+router.get("/user/:userId", complainController.getComplainsByUser);
+
 // Route for specific ID operations
 router.route("/:id")
     .get(complainController.getComplainById)

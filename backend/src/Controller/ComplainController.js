@@ -11,10 +11,10 @@ exports.createComplain = async (req, res) => {
     }
 };
 
-// 2. Get all Complaints (with Resident details)
+// 2. Get all Complaints (with User details) - Admin View
 exports.getAllComplains = async (req, res) => {
     try {
-        const complains = await Complain.find().populate("residentId", "name email"); 
+        const complains = await Complain.find().sort({ createdAt: -1 }).populate("userId", "name email"); 
         res.status(200).json(complains);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -32,17 +32,34 @@ exports.getComplainById = async (req, res) => {
     }
 };
 
-// 4. Update Complaint (Status, Priority, etc.)
+// 4. Get complaints by userId - User Dashboard View
+exports.getComplainsByUser = async (req, res) => {
+    try {
+        const complains = await Complain.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+        res.status(200).json(complains);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// 5. Update Complaint + Admin Response
 exports.updateComplain = async (req, res) => {
     try {
-        // If status is being updated to 'Resolved', set resolveAt date automatically
-        if (req.body.status === "Resolved") {
-            req.body.resolveAt = Date.now();
+        const updateData = { ...req.body };
+
+        // Auto timestamp: resolved
+        if (updateData.status === "Resolved" || updateData.status === "Closed") {
+            updateData.resolveAt = Date.now();
+        }
+
+        // Auto timestamp: admin responded
+        if (updateData.adminResponse) {
+            updateData.respondedAt = Date.now();
         }
 
         const updatedComplain = await Complain.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updateData,
             { new: true, runValidators: true }
         );
         res.status(200).json(updatedComplain);
@@ -51,7 +68,7 @@ exports.updateComplain = async (req, res) => {
     }
 };
 
-// 5. Delete a Complaint
+// 6. Delete a Complaint
 exports.deleteComplain = async (req, res) => {
     try {
         await Complain.findByIdAndDelete(req.params.id);

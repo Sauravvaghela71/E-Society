@@ -160,8 +160,48 @@ const getUserById = async (req, res) => {
   }
 };
 
+// Upload Profile Picture → Cloudinary → save URL in MongoDB
+const uploadToCloudinary = require("../Util/CloudinaryUtil");
+
+const uploadProfilePic = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Upload the file (stored locally by multer) to Cloudinary
+    const cloudinaryResult = await uploadToCloudinary(req.file.path);
+
+    // Save the Cloudinary URL to the user document
+    const updatedUser = await userSchema.findByIdAndUpdate(
+      req.params.id,
+      { profilePic: cloudinaryResult.secure_url },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      profilePic: cloudinaryResult.secure_url,
+      user: {
+        _id: updatedUser._id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        profilePic: updatedUser.profilePic,
+      }
+    });
+  } catch (error) {
+    console.error("Profile pic upload error:", error);
+    res.status(500).json({ message: "Upload failed", error: error.message });
+  }
+};
+
 module.exports = {
     registerUser,
     loginUser,
-    getUserById
+    getUserById,
+    uploadProfilePic,
 }

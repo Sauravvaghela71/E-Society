@@ -41,7 +41,11 @@ const userSchema = new Schema({
         type: String,
         default: "active",
         enum: ["active", "inactive", "deleted", "blocked"]
+    },
+    profilePic: {
+        type: String,
+        default: ""
     }
-})
+}, { timestamps: true })
 
 module.exports = mongoose.model("users", userSchema)

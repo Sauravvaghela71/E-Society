@@ -2,14 +2,22 @@ const mongoose = require("mongoose");
 
 const complainSchema = new mongoose.Schema(
     {
-        residentId: {
+        userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Resident",
-            required: true
+            ref: "users",
         },
-        complainantName: {
+        name: {
             type: String,
             required: true,     
+        },
+        mobile: {
+            type: String,
+        },
+        wing: {
+            type: String,
+        },
+        flat: {
+            type: String,
         },
         description: {
             type: String,
@@ -17,23 +25,32 @@ const complainSchema = new mongoose.Schema(
         },
         category: { 
             type: String,
-            enum: ["Maintenance", "Security", "Noise", "Other"],
             required: true
+        },
+        location: {
+            type: String,
         },
         status: {
             type: String,
-            enum: ["Pending", "In Progress", "Resolved"],
+            enum: ["Pending", "In Progress", "Resolved", "Closed"],
             default: "Pending"
         },
         priority: {
             type: String,
-            enum: ["Low", "Medium", "High"],
             default: "Medium"
         },
         resolveAt:{
             type: Date  
+        },
+        adminResponse: {
+            type: String,
+            default: ""
+        },
+        respondedAt: {
+            type: Date
         }
-    }
+    },
+    { timestamps: true }
 )
 
 module.exports = mongoose.model("Complain",complainSchema)
