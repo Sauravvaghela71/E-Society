@@ -14,12 +14,13 @@ import Emergency from "../component/Admin/Emergency";
 import Security from "../component/Admin/Security";
 import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
-import Complaint from "../component/Admin/Complain";
+import AdminComplaint from "../component/Admin/Complain";
 import Society from "../component/Admin/Society";
 import HomePage from "../component/User/HomePage";
 import UserLayout from "../component/User/UserLayout";
 import UserProfile from "../component/User/UserProfile";
 import UserDashboard from "../component/User/UserDashboard";
+import UserComplaint from "../component/User/Complain";
 import FlatDetails from "../component/Admin/FlatDetails";
 import { Navigate } from "react-router-dom";
 
@@ -67,7 +68,7 @@ const router = createBrowserRouter([
       },
         {
         path: "complain",
-        element: <Complaint />
+        element: <AdminComplaint />
       },
         {
         path: "notice",
@@ -137,7 +138,7 @@ const router = createBrowserRouter([
       },
       {
         path:"complaint",
-        element:<Complaint/>
+        element:<UserComplaint/>
       }
 
     ]

@@ -1,284 +1,239 @@
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
-export default function Complaint() {
+export default function AdminComplaint() {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm();
+  // Form states for update
+  const [updateStatus, setUpdateStatus] = useState("");
+  const [updatePriority, setUpdatePriority] = useState("");
+  const [adminNote, setAdminNote] = useState("");
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5100/api/complaint");
+      setComplaints(res.data);
+    } catch (error) {
+      console.error("Error fetching complaints:", error);
+      toast.error("Failed to load complaints");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+
+  const openModal = (complaint) => {
+    setSelectedComplaint(complaint);
+    setUpdateStatus(complaint.status);
+    setUpdatePriority(complaint.priority);
+    setAdminNote(complaint.adminResponse || "");
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedComplaint(null);
+    setAdminNote("");
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.put(`http://localhost:5100/api/complaint/${selectedComplaint._id}`, {
+        status: updateStatus,
+        priority: updatePriority,
+        adminResponse: adminNote,
+      });
+
+      if (res.status === 200) {
+        toast.success("Complaint updated successfully!");
+        fetchComplaints(); // Refresh table
+        closeModal();
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update complaint");
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Resolved":
+      case "Closed":
+        return "bg-green-100 text-green-700";
+      case "In Progress":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-yellow-100 text-yellow-700";
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "High":
+      case "Urgent":
+        return "bg-red-100 text-red-700";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-green-100 text-green-700";
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500 font-semibold text-lg">Loading Complaints...</div>;
+  }
+
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Manage Complaints</h1>
 
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        Register Complaint
-      </h1>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-
-        {/* Resident Information */}
-
-        <Section title="Resident Information">
-
-          <Input
-            label="Resident Name"
-            required
-            error={errors.name}
-            register={register("name", {
-              required: "Resident name required"
-            })}
-          />
-
-          <Input
-            label="Mobile Number"
-            required
-            error={errors.mobile}
-            register={register("mobile", {
-              required: "Mobile number required",
-              pattern: {
-                value: /^[0-9]{10}$/,
-                message: "Enter valid 10 digit number"
-              }
-            })}
-          />
-
-          <Input
-            label="Wing"
-            required
-            error={errors.wing}
-            register={register("wing", {
-              required: "Wing required"
-            })}
-          />
-
-          <Input
-            label="Flat Number"
-            required
-            error={errors.flat}
-            register={register("flat", {
-              required: "Flat number required"
-            })}
-          />
-
-        </Section>
-
-        {/* Complaint Details */}
-
-        <Section title="Complaint Details">
-
-          <Select
-            label="Complaint Category"
-            required
-            error={errors.category}
-            register={register("category", {
-              required: "Select complaint category"
-            })}
-            options={[
-              "Water Issue",
-              "Electricity Issue",
-              "Lift Issue",
-              "Parking Issue",
-              "Security Issue",
-              "Cleaning Issue",
-              "Other"
-            ]}
-          />
-
-          <Select
-            label="Priority"
-            required
-            error={errors.priority}
-            register={register("priority", {
-              required: "Select priority"
-            })}
-            options={[
-              "Low",
-              "Medium",
-              "High",
-              "Urgent"
-            ]}
-          />
-
-          <Select
-            label="Complaint Location"
-            register={register("location")}
-            options={[
-              "Flat",
-              "Parking",
-              "Garden",
-              "Lift",
-              "Common Area"
-            ]}
-          />
-
-        </Section>
-
-        {/* Description */}
-
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">
-            Complaint Description
-          </h2>
-
-          <textarea
-            rows="4"
-            {...register("description", {
-              required: "Complaint description required",
-              minLength: {
-                value: 10,
-                message: "Minimum 10 characters required"
-              }
-            })}
-            className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-
-          {errors.description && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.description.message}
-            </p>
-          )}
-
-        </div>
-
-        {/* Attachment */}
-
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">
-            Upload Image (Optional)
-          </h2>
-
-          <input
-            type="file"
-            {...register("image")}
-            className="w-full border rounded-lg px-3 py-2"
-          />
-
-        </div>
-
-        {/* Status */}
-
-        <Section title="Complaint Status">
-
-          <Select
-            label="Status"
-            register={register("status")}
-            options={[
-              "Pending",
-              "In Progress",
-              "Resolved",
-              "Closed"
-            ]}
-          />
-
-        </Section>
-
-        {/* Buttons */}
-
-        <div className="flex justify-end gap-4">
-
-          <button
-            type="button"
-            className="px-6 py-2 border rounded-lg hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Submit Complaint
-          </button>
-
-        </div>
-
-      </form>
-    </div>
-  );
-}
-
-
-/* SECTION COMPONENT */
-
-function Section({ title, children }) {
-  return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm">
-
-      <h2 className="text-lg font-semibold mb-5 text-gray-700">
-        {title}
-      </h2>
-
-      <div className="grid md:grid-cols-2 gap-5">
-        {children}
+      <div className="bg-white rounded-xl shadow border overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-4 text-left font-semibold text-gray-600">Complainant</th>
+              <th className="px-6 py-4 text-left font-semibold text-gray-600">Unit / Mobile</th>
+              <th className="px-6 py-4 text-left font-semibold text-gray-600">Category</th>
+              <th className="px-6 py-4 text-left font-semibold text-gray-600">Priority</th>
+              <th className="px-6 py-4 text-left font-semibold text-gray-600">Status</th>
+              <th className="px-6 py-4 text-center font-semibold text-gray-600">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white">
+            {complaints.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-6 py-8 text-center text-gray-500 font-medium">
+                  No complaints registered yet.
+                </td>
+              </tr>
+            ) : (
+              complaints.map((comp) => (
+                <tr key={comp._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-gray-800">{comp.name || "Unknown"}</p>
+                    <p className="text-xs text-gray-500 max-w-[200px] truncate" title={comp.description}>
+                      {comp.description}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-medium text-gray-700">Flat: {comp.flat || "-"} / Wing: {comp.wing || "-"}</p>
+                    <p className="text-xs text-gray-500">{comp.mobile || "-"}</p>
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-700">{comp.category || "-"}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(comp.priority)}`}>
+                      {comp.priority || "Medium"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(comp.status)}`}>
+                      {comp.status || "Pending"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => openModal(comp)}
+                      className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      Respond
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-    </div>
-  );
-}
+      {/* Update Modal */}
+      {isModalOpen && selectedComplaint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 animate-fade-in-up">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">Respond to Complaint</h2>
+            
+            <div className="mb-6 space-y-3">
+              <div>
+                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Complainant</span>
+                <p className="font-medium text-gray-800">{selectedComplaint.name}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Description</span>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg border mt-1">{selectedComplaint.description}</p>
+              </div>
+            </div>
 
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Update Status</label>
+                  <select
+                    value={updateStatus}
+                    onChange={(e) => setUpdateStatus(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Update Priority</label>
+                  <select
+                    value={updatePriority}
+                    onChange={(e) => setUpdatePriority(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
 
-/* INPUT COMPONENT */
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Response to Resident <span className="font-normal text-gray-400">(message visible to the resident)</span>
+                </label>
+                <textarea
+                  rows="3"
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  placeholder="e.g. We have received your complaint and our team will resolve it within 24 hours."
+                  className="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 resize-none"
+                />
+              </div>
 
-function Input({ label, register, error, required, type = "text" }) {
-  return (
-    <div>
-
-      <label className="block text-sm font-medium mb-1">
-        {label} {required && "*"}
-      </label>
-
-      <input
-        type={type}
-        {...register}
-        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-      />
-
-      {error && (
-        <p className="text-red-500 text-sm mt-1">
-          {error.message}
-        </p>
+              <div className="flex justify-end gap-3 mt-8 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
-
-    </div>
-  );
-}
-
-
-/* SELECT COMPONENT */
-
-function Select({ label, register, options, error, required }) {
-  return (
-    <div>
-
-      <label className="block text-sm font-medium mb-1">
-        {label} {required && "*"}
-      </label>
-
-      <select
-        {...register}
-        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-      >
-        <option value="">Select</option>
-
-        {options.map((item) => (
-          <option key={item}>{item}</option>
-        ))}
-
-      </select>
-
-      {error && (
-        <p className="text-red-500 text-sm mt-1">
-          {error.message}
-        </p>
-      )}
-
     </div>
   );
 }
