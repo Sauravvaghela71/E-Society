@@ -173,20 +173,27 @@ export default function FacilityBooking() {
                         {generateTimeSlots().map(slot => {
                           const isBooked = bookedSlots.includes(slot);
                           return (
-                            <button
+                            <label
                               key={slot}
-                              disabled={isBooked}
-                              onClick={() => setSelectedSlot(slot)}
-                              className={`p-3 rounded-xl text-sm font-semibold border-2 transition-all flex justify-center items-center ${
+                              className={`p-3 rounded-xl text-sm font-semibold border-2 transition-all flex items-center gap-3 cursor-pointer ${
                                 isBooked 
-                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
+                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60' 
                                 : selectedSlot === slot
-                                  ? 'bg-blue-600 border-blue-600 text-white shadow-md'
-                                  : 'bg-white border-gray-200 hover:border-blue-300 text-gray-700'
+                                  ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
+                                  : 'bg-white border-gray-200 hover:border-blue-300 text-gray-700 hover:bg-gray-50'
                               }`}
                             >
+                              <input 
+                                type="checkbox"
+                                name="timeSlot"
+                                value={slot}
+                                disabled={isBooked}
+                                checked={selectedSlot === slot}
+                                onChange={() => setSelectedSlot(selectedSlot === slot ? "" : slot)}
+                                className={`w-5 h-5 rounded border-gray-300 ${isBooked ? 'cursor-not-allowed' : 'cursor-pointer accent-blue-600'}`}
+                              />
                               {slot}
-                            </button>
+                            </label>
                           );
                         })}
                       </div>

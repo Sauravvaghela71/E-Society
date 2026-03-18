@@ -10,7 +10,7 @@ export default function Facilities() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [selectedResident, setSelectedResident] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   const API_URL = "http://localhost:5100/api/facilities";
 
@@ -63,6 +63,9 @@ export default function Facilities() {
       await axios.put(`${API_URL}/bookings/${id}/status`, { status });
       // update state
       setBookings(bookings.map(b => b._id === id ? { ...b, status } : b));
+      if (selectedRequest && selectedRequest._id === id) {
+        setSelectedRequest(null);
+      }
     } catch (err) {
       alert("Failed to update booking status.");
     }
@@ -193,19 +196,19 @@ export default function Facilities() {
             <h2 className="text-lg font-bold mb-4">Latest Resident Bookings</h2>
             <div className="space-y-4">
               {bookings.slice(0, 10).map((b) => (
-                 <div key={b._id} className="bg-gray-50 border border-gray-100 p-4 flex gap-4 rounded-xl items-center relative overflow-hidden group">
+                 <div 
+                   key={b._id} 
+                   onClick={() => setSelectedRequest(b)}
+                   className="bg-gray-50 border border-gray-100 p-4 flex gap-4 rounded-xl items-center relative overflow-hidden group hover:border-blue-200 cursor-pointer transition-all hover:bg-white hover:shadow-md"
+                 >
                     <div className="bg-blue-100 text-blue-700 p-2 rounded-lg text-center min-w-[50px]">
                       <span className="block text-lg font-black leading-none">{new Date(b.bookingDate).getDate()}</span>
                       <span className="text-[10px] uppercase font-bold">{new Date(b.bookingDate).toLocaleDateString('en-US', {month: 'short'})}</span>
                     </div>
                     <div className="flex-1">
-                      <p 
-                        className="font-bold text-gray-800 flex items-center gap-2 cursor-pointer hover:text-blue-600 transition-colors"
-                        onClick={() => setSelectedResident(b.resident)}
-                        title="Click to view resident details"
-                      >
+                      <p className="font-bold text-gray-800 flex items-center gap-2" title="Click to view full resident request">
                         {b.resident?.Name || "Deleted Resident"}
-                        <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full ${b.status === 'Confirmed' ? 'bg-green-100 text-green-700' : b.status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
+                        <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full ${b.status === 'Confirmed' ? 'bg-green-100 text-green-700' : b.status === "Pending" ? "bg-orange-100 text-orange-700 animate-pulse" : "bg-red-100 text-red-700"}`}>
                           {b.status || 'Confirmed'}
                         </span>
                       </p>
@@ -214,17 +217,9 @@ export default function Facilities() {
                     </div>
                     <div className="text-right flex flex-col items-end justify-center">
                       <span className="block text-green-600 font-black text-sm mb-1 line-clamp-1">₹{b.amountPaid}</span>
-                      
-                      {b.status === "Pending" ? (
-                        <div className="flex gap-1 mt-1">
-                          <button onClick={() => handleUpdateBookingStatus(b._id, 'Confirmed')} className="text-[10px] bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded font-bold uppercase transition-colors">Approve</button>
-                          <button onClick={() => handleUpdateBookingStatus(b._id, 'Cancelled')} className="text-[10px] bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded font-bold uppercase transition-colors">Reject</button>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-md font-bold uppercase">{b.paymentStatus}</span>
-                      )}
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-bold uppercase transition-all group-hover:scale-105">View Request</span>
                     </div>
-                  </div>
+                 </div>
               ))}
               {bookings.length === 0 && <p className="text-center text-gray-400 py-8">No bookings found</p>}
             </div>
@@ -233,48 +228,71 @@ export default function Facilities() {
         </div>
       </div>
 
-      {/* Resident Profile Modal */}
-      {selectedResident && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-gray-100">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-center relative">
-              <button 
-                onClick={() => setSelectedResident(null)}
-                className="absolute top-4 right-4 text-white/70 hover:text-white"
-              >
-                &times;
-              </button>
-              <div className="w-20 h-20 bg-white rounded-full mx-auto shadow-lg flex items-center justify-center mb-3">
-                <span className="text-3xl font-black text-blue-600">{selectedResident.Name?.charAt(0) || 'U'}</span>
+      {/* Resident Request Profile Modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden mx-4 scale-100 animate-in zoom-in-95">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 flex justify-between items-center text-white">
+              <div>
+                <h2 className="text-xl font-black">Resident Request Form</h2>
+                <p className="text-blue-100 text-sm opacity-90">Booking detailed review and approval</p>
               </div>
-              <h3 className="text-xl font-black text-white">{selectedResident.Name || 'Deleted User'}</h3>
-              <p className="text-blue-200 text-sm font-medium">Resident Complete Profile</p>
+              <button onClick={() => setSelectedRequest(null)} className="text-white hover:text-gray-200 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20">&times;</button>
             </div>
             
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Email</span>
-                <span className="text-gray-800 font-bold text-sm">{selectedResident.email || 'N/A'}</span>
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 flex items-center justify-center rounded-full font-black text-2xl shadow-inner border-2 border-white">
+                  {selectedRequest.resident?.Name?.[0] || 'R'}
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">{selectedRequest.resident?.Name || 'Unknown Resident'}</h3>
+                  <div className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-1">
+                    Wing {selectedRequest.resident?.blockWing || '?'} - Flat {selectedRequest.resident?.flatNumber || '?'}
+                  </div>
+                  <div className="text-sm text-gray-600 flex gap-4 mt-2">
+                     <span>📞 {selectedRequest.resident?.mobileNumber || 'N/A'}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Mobile</span>
-                <span className="text-gray-800 font-bold text-sm">{selectedResident.mobileNumber || 'N/A'}</span>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="p-3 border rounded-xl">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Facility Requested</p>
+                    <p className="font-black text-gray-800 mt-1">{selectedRequest.facility?.name}</p>
+                </div>
+                <div className="p-3 border rounded-xl">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Requested Date</p>
+                    <p className="font-black text-blue-600 mt-1">{new Date(selectedRequest.bookingDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+                <div className="p-3 border rounded-xl col-span-2 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Time Slot</p>
+                      <p className="font-black text-gray-800 mt-1">{selectedRequest.timeSlot}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Payment Sent</p>
+                      <p className="font-black text-green-600 mt-1">₹{selectedRequest.amountPaid} <span className="text-[10px] bg-green-100 px-1 py-0.5 rounded text-green-800 uppercase">{selectedRequest.paymentStatus}</span></p>
+                    </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Wing / Block</span>
-                <span className="text-gray-800 font-black text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">{selectedResident.blockWing || 'N/A'}</span>
+
+              <div className="flex gap-4">
+                {selectedRequest.status === "Pending" ? (
+                  <>
+                    <button onClick={() => handleUpdateBookingStatus(selectedRequest._id, 'Confirmed')} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg shadow-green-600/20 transition-all uppercase tracking-wider">
+                      Approve Request
+                    </button>
+                    <button onClick={() => handleUpdateBookingStatus(selectedRequest._id, 'Cancelled')} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-black py-4 rounded-xl shadow-inner transition-all uppercase tracking-wider">
+                      Decline
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => setSelectedRequest(null)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 rounded-xl transition-all uppercase tracking-wider">
+                    Close Details (Currently {selectedRequest.status})
+                  </button>
+                )}
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                <span className="text-gray-500 text-xs font-bold uppercase tracking-wider">Flat Number</span>
-                <span className="text-gray-800 font-black text-sm text-green-600 bg-green-50 px-3 py-1 rounded-lg"># {selectedResident.flatNumber || 'N/A'}</span>
-              </div>
-              
-              <button 
-                onClick={() => setSelectedResident(null)}
-                className="w-full mt-4 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors"
-              >
-                Close Profile
-              </button>
             </div>
           </div>
         </div>

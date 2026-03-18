@@ -1,131 +1,251 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
-  User, Settings, MessageCircle, CreditCard,
-  Bell, ShieldCheck, FileText, Calendar
+  User, Bell, ShieldCheck, MessageCircle, 
+  Calendar, CreditCard, Clock, Activity
 } from "lucide-react";
 
-const UserDashboard = () => {
+export default function UserDashboard() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  
+  // Real-time data states
+  const [notices, setNotices] = useState([]);
+  const [myBookings, setMyBookings] = useState([]);
+  const [myVisitors, setMyVisitors] = useState([]);
+  const [myComplaints, setMyComplaints] = useState([]);
 
-  const features = [
-    {
-      title: "My Profile",
-      description: "View and update your personal information",
-      icon: <User className="text-blue-500" />,
-      path: "/user/profile",
-      color: "bg-blue-50 hover:bg-blue-100"
-    },
-    {
-      title: "Settings",
-      description: "Manage your account preferences",
-      icon: <Settings className="text-gray-500" />,
-      path: "/user/settings",
-      color: "bg-gray-50 hover:bg-gray-100"
-    },
-    {
-      title: "Complaints",
-      description: "Submit and track your complaints",
-      icon: <MessageCircle className="text-orange-500" />,
-      path: "/user/complaint", // Assuming a route, or make it a placeholder
-      color: "bg-orange-50 hover:bg-orange-100"
-    },
-    {
-      title: "Maintenance Bills",
-      description: "View and pay your maintenance fees",
-      icon: <CreditCard className="text-green-500" />,
-      path: "/user/payment", // Placeholder
-      color: "bg-green-50 hover:bg-green-100"
-    },
-    {
-      title: "Notices",
-      description: "Read important society notices",
-      icon: <Bell className="text-purple-500" />,
-      path: "/user/notice", // Placeholder
-      color: "bg-purple-50 hover:bg-purple-100"
-    },
-    {
-      title: "Visitor Logs",
-      description: "Check visitor entries and security",
-      icon: <ShieldCheck className="text-indigo-500" />,
-      path: "/user/visitor", // Placeholder
-      color: "bg-indigo-50 hover:bg-indigo-100"
-    },
-    {
-      title: "Documents",
-      description: "Access society documents and bylaws",
-      icon: <FileText className="text-teal-500" />,
-      path: "/user/documents", // Placeholder
-      color: "bg-teal-50 hover:bg-teal-100"
-    },
-    {
-      title: "Events",
-      description: "View upcoming society events",
-      icon: <Calendar className="text-pink-500" />,
-      path: "/user/events", // Placeholder
-      color: "bg-pink-50 hover:bg-pink-100"
+  // Get current user details from local storage
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        setCurrentUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error("Failed to parse user");
+      }
     }
+  }, []);
+
+  const [hasFetched, setHasFetched] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser || hasFetched) return;
+
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const profileId = currentUser.profileid || currentUser._id;
+        
+        // Fetch all relevant data concurrently
+        const [noticeRes, bookingRes, visitorRes, complaintRes, profileRes] = await Promise.allSettled([
+          axios.get("http://localhost:5100/api/notice"),
+          axios.get("http://localhost:5100/api/facilities/bookings"),
+          axios.get("http://localhost:5100/api/visitor"),
+          axios.get("http://localhost:5100/api/complaint"),
+          axios.get(`http://localhost:5100/api/residents/${profileId}`)
+        ]);
+
+        // Merge fetched profile data with currentUser
+        let activeUser = { ...currentUser };
+        if (profileRes.status === "fulfilled" && profileRes.value.data) {
+           const residentData = profileRes.value.data;
+           activeUser = { 
+               ...activeUser, 
+               firstName: residentData.firstName || residentData.Name || activeUser.email?.split('@')[0], 
+               lastName: residentData.lastName || "",
+               blockWing: residentData.blockWing || "",
+               flatNumber: residentData.flatNumber || ""
+           };
+           setCurrentUser(activeUser); // Updates screen state immediately
+        }
+        setHasFetched(true);
+
+        // Process Notices (Only active)
+        if (noticeRes.status === "fulfilled") {
+          const allNotices = Array.isArray(noticeRes.value.data) ? noticeRes.value.data : noticeRes.value.data?.data || [];
+          setNotices(allNotices.filter(n => n.status === "Active").slice(0, 3));
+        }
+
+        // Process Bookings (Filter for current user)
+        if (bookingRes.status === "fulfilled") {
+          const allBookings = Array.isArray(bookingRes.value.data) ? bookingRes.value.data : bookingRes.value.data?.data || [];
+          setMyBookings(allBookings.filter(b => b.resident?._id === profileId || b.resident === profileId).slice(0, 3));
+        }
+
+        // Process Visitors (Filter by exact wing/flat)
+        // Note: visitor API might not link directly to profileId in all cases, so checking wing/flat as well
+        if (visitorRes.status === "fulfilled") {
+          const allVisitors = Array.isArray(visitorRes.value.data) ? visitorRes.value.data : visitorRes.value.data?.data || [];
+          // If the visitor's wing/flat matches the resident's wing/flat
+          setMyVisitors(allVisitors.filter(v => 
+             (v.blockWing === currentUser.blockWing && String(v.flatNumber) === String(currentUser.flatNumber)) ||
+             v.visitingResident === profileId
+          ).slice(0, 3));
+        }
+
+        // Process Complaints (Filter by user)
+        if (complaintRes.status === "fulfilled") {
+           const allComplaints = Array.isArray(complaintRes.value.data) ? complaintRes.value.data : complaintRes.value.data?.data || [];
+           setMyComplaints(allComplaints.filter(c => c.complainer?._id === profileId || c.complainer === profileId).slice(0, 3));
+        }
+
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [currentUser, hasFetched]);
+
+  if (loading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Activity size={40} className="text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  // Generate Quick Links dynamically
+  const features = [
+    { title: "My Profile", icon: <User size={24}/>, path: "/user/profile", color: "text-blue-600 bg-blue-50", count: null },
+    { title: "Amenities", icon: <Calendar size={24}/>, path: "/user/facilities", color: "text-green-600 bg-green-50", count: myBookings.length },
+    { title: "My Complaints", icon: <MessageCircle size={24}/>, path: "/user/complaint", color: "text-orange-600 bg-orange-50", count: myComplaints.length },
+    { title: "Visitor Logs", icon: <ShieldCheck size={24}/>, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-            Welcome to E-Society
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Manage your society activities, payments, and communications all in one place.
-          </p>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Welcome Header */}
+        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tight line-clamp-1">
+              Hello, {currentUser.firstName} {currentUser.lastName}! 👋
+            </h1>
+            <p className="text-blue-100 text-lg md:text-xl font-medium max-w-2xl">
+              Welcome to your real-time E-Society hub for Wing {currentUser.blockWing || "N/A"}, Flat {currentUser.flatNumber || "N/A"}.
+            </p>
+          </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
+        {/* Quick Links / Counters Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {features.map((feature, idx) => (
+            <div 
+              key={idx} 
               onClick={() => navigate(feature.path)}
-              className={`p-6 rounded-[2rem] border border-gray-100 shadow-sm cursor-pointer transition-all duration-300 ${feature.color} group`}
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:-translate-y-1 transition-all group flex flex-col justify-between"
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="text-4xl mb-4 p-4 bg-white rounded-2xl shadow-sm group-hover:scale-110 transition-transform">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
+                {feature.icon}
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">{feature.title}</h3>
+                {feature.count !== null && (
+                  <p className="text-xs text-gray-500 font-bold mt-1 uppercase tracking-wider">
+                    {feature.count} Recent Records
+                  </p>
+                )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-16 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Quick Actions</h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => navigate("/user/profile")}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all"
-            >
-              Update Profile
-            </button>
-            <button
-              onClick={() => navigate("/user/complaint")}
-              className="px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all"
-            >
-              New Complaint
-            </button>
-            <button
-              onClick={() => navigate("/user/payment")}
-              className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all"
-            >
-              Pay Bill
-            </button>
+        {/* Live Data Sections Grid */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          
+          {/* Active Notices Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <Bell className="text-purple-500" /> Society Notices
+              </h2>
+            </div>
+            <div className="space-y-4 flex-1">
+              {notices.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-4 font-medium">No active notices.</p>
+              ) : notices.map(notice => (
+                <div key={notice._id} className="border-l-4 border-purple-500 pl-4 py-2 opacity-90 hover:opacity-100 transition-opacity">
+                  <h3 className="font-bold text-gray-800 line-clamp-1">{notice.title}</h3>
+                  <p className="text-xs text-gray-500 line-clamp-2 mt-1">{notice.description}</p>
+                  <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase">
+                    {new Date(notice.date).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <button className="mt-4 w-full text-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors p-2 bg-blue-50 rounded-lg">View All Notices</button>
           </div>
+
+          {/* Visitors Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <ShieldCheck className="text-indigo-500" /> Recent Visitors
+              </h2>
+            </div>
+            <div className="space-y-4 flex-1">
+              {myVisitors.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-4 font-medium">No recent visitors to your flat.</p>
+              ) : myVisitors.map(v => (
+                <div key={v._id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <div className="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold">
+                    {v.visitorName?.[0] || 'V'}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800 text-sm">{v.visitorName}</p>
+                    <p className="text-xs text-gray-500">{v.purpose}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full ${v.status === 'inside' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
+                      {v.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bookings Feed */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <Calendar className="text-green-500" /> My Bookings
+              </h2>
+            </div>
+            <div className="space-y-4 flex-1">
+              {myBookings.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-4 font-medium">You haven't booked any amenities.</p>
+              ) : myBookings.map(b => (
+                <div key={b._id} className="relative bg-gray-50 p-3 rounded-xl border border-gray-100 overflow-hidden">
+                  <div className={`absolute top-0 left-0 w-1 h-full ${b.status === 'Confirmed' ? 'bg-green-500' : b.status === "Pending" ? 'bg-orange-400' : 'bg-red-500'}`}></div>
+                  <div className="ml-2">
+                    <p className="font-bold text-gray-800 text-sm">{b.facility?.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock size={12} className="text-gray-400"/>
+                      <span className="text-xs text-gray-500 font-medium">{b.timeSlot}</span>
+                    </div>
+                    <div className="mt-2 flex justify-between items-center">
+                      <span className="text-xs font-black text-gray-700">{new Date(b.bookingDate).toLocaleDateString()}</span>
+                      <span className="text-[9px] bg-white border px-1.5 py-0.5 rounded text-gray-600 font-bold uppercase">{b.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => navigate('/user/facilities')} className="mt-4 w-full text-center text-sm font-bold text-green-600 hover:text-green-800 transition-colors p-2 bg-green-50 rounded-lg">New Booking</button>
+          </div>
+
         </div>
       </div>
     </div>
   );
-};
-
-export default UserDashboard;
+}
