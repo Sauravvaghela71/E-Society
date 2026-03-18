@@ -1,4 +1,5 @@
 const Security = require("../Model/SecurityModel");
+const User = require("../Model/UserModel");
 const bcrypt = require("bcryptjs");
 
 /* ---------------- LOGIN SECURITY (NEW) ---------------- */
@@ -32,24 +33,47 @@ exports.createSecurity = async (req, res) => {
   try {
     const { mobile, password, ...rest } = req.body;
 
-    // Check if mobile already exists
+    // Check if email is provided (needed for login)
+    if (!rest.email) {
+      return res.status(400).json({ message: "Email is required to create a login account for the guard." });
+    }
+
+    // Check if mobile already exists in Security
     const existingGuard = await Security.findOne({ mobile });
     if (existingGuard) {
       return res.status(400).json({ message: "Security guard with this mobile number already exists" });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if email already exists in User Account
+    const existingUser = await User.findOne({ email: rest.email });
+    if (existingUser) {
+      return res.status(400).json({ message: "This email is already in use by another account." });
+    }
 
-    // Create new guard
+    // Create new guard (password hashed by pre-save hook)
     const security = new Security({
       mobile,
-      password: hashedPassword,
+      password,
       ...rest
     });
 
-    const savedSecurity = await security.save();
-    res.status(201).json(savedSecurity);
+    // Hash password for User Table
+    const hashedUserPassword = await bcrypt.hash(password, 10);
+
+    // Create User account to allow login
+    const user = new User({
+      Name: `${rest.firstName || ''} ${rest.lastName || ''}`.trim(),
+      email: rest.email,
+      password: hashedUserPassword,
+      role: "guard",
+      profileid: security._id,
+      status: "active"
+    });
+
+    // Save both simultaneously
+    await Promise.all([security.save(), user.save()]);
+
+    res.status(201).json(security);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

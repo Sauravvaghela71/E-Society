@@ -28,12 +28,11 @@ const securitySchema = new mongoose.Schema({
 });
 
 // Password ko save karne se pehle hash (encrypt) karne ka function
-securitySchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+securitySchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 module.exports = mongoose.model("Security", securitySchema);

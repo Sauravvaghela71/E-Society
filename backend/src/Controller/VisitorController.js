@@ -1,13 +1,85 @@
 const Visitor = require("../Model/VisitorModel");
+const Resident = require("../Model/ResidentModel");
+const mailSend = require("../Util/MailSend");
 
 // 1. Check-In: Add a new visitor
 exports.checkInVisitor = async (req, res) => {
     try {
-        const visitor = new Visitor(req.body);
+        const payload = req.body;
+        // If assigned to a resident, wait for their approval
+        if (payload.visitingResident) {
+            payload.status = 'Pending';
+        }
+        
+        const visitor = new Visitor(payload);
         await visitor.save();
+
+        if (req.body.visitingResident && req.body.visitorKey) {
+            const resident = await Resident.findById(req.body.visitingResident);
+            if (resident && resident.email) {
+                const subject = "Visitor Entry Notification — Key Received";
+                const htmlTemplate = `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                        <h2 style="color: #2563eb;">A Visitor Has Arrived For You</h2>
+                        <p><strong>Visitor Name:</strong> ${visitor.visitorName}</p>
+                        <p><strong>Mobile:</strong> ${visitor.mobileNumber}</p>
+                        <p><strong>Purpose:</strong> ${visitor.purpose}</p>
+                        <br/>
+                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 10px; text-align: center;">
+                            <p style="margin: 0; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Visitor Entry Key</p>
+                            <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #1e3a8a; letter-spacing: 5px;">${visitor.visitorKey}</p>
+                        </div>
+                        <p style="margin-top: 20px; color: #4b5563;">Please ask the visitor for this key to verify their identity.</p>
+                        <br/>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <a href="http://localhost:5100/api/visitor/accept/${visitor._id}" target="_blank" rel="noopener noreferrer" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; cursor: pointer;">
+                                Accept Visitor
+                            </a>
+                        </div>
+                        <p style="margin-top: 15px; color: #9ca3af; font-size: 13px; text-align: center;">Clicking accept will notify the guard to allow them entry immediately.</p>
+                        
+                        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center;">
+                            If the button above does not work (often because email clients blook local links), please copy and paste this URL into your browser:<br/>
+                            <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; color: #1f2937; margin-top: 5px; display: inline-block; word-break: break-all;">
+                                http://localhost:5100/api/visitor/accept/${visitor._id}
+                            </code>
+                        </div>
+                    </div>
+                `;
+                
+                // Fire and forget email hook so API doesn't hang
+                mailSend(resident.email, subject, htmlTemplate).catch(err => {
+                    console.error("Failed to send email to resident:", err.message);
+                });
+            }
+        }
+
         res.status(201).json({ success: true, data: visitor });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+// 1B. Accept Visitor Request (From Resident Email)
+exports.acceptVisitor = async (req, res) => {
+    try {
+        const visitor = await Visitor.findByIdAndUpdate(
+            req.params.id,
+            { status: 'inside' },
+            { new: true }
+        );
+        if (!visitor) {
+            return res.status(404).send("<h2>Visitor not found.</h2>");
+        }
+        res.status(200).send(`
+            <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                <h1 style="color: #10b981;">Visitor Approved Successfully! ✅</h1>
+                <p>The guard has been notified and the visitor is granted entry.</p>
+                <p>You can safely close this page.</p>
+            </div>
+        `);
+    } catch (error) {
+        res.status(500).send("<h2>Error approving visitor.</h2>");
     }
 };
 

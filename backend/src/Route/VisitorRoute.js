@@ -10,6 +10,9 @@ router.route("/")
 // Checkout specific visitor
 router.put("/checkout/:id", visitorController.checkOutVisitor);
 
+// Accept specific visitor via email link
+router.get("/accept/:id", visitorController.acceptVisitor);
+
 // General update and delete
 router.route("/:id")
     .put(visitorController.updateVisitorDetails)
