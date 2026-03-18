@@ -19,6 +19,10 @@ const maintenanceSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    details: {
+        type: String,
+        default: ""
+    },
     dueDate: {
         type: Date,
         required: true

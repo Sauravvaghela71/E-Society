@@ -1,4 +1,34 @@
 const Maintenance = require("../Model/MaintenanceModel");
+const MaintenanceSetting = require("../Model/MaintenanceSettingModel");
+
+// 0. Settings Handlers
+exports.getSettings = async (req, res) => {
+    try {
+        let setting = await MaintenanceSetting.findOne();
+        if(!setting) {
+            setting = new MaintenanceSetting({ maintenanceAmount: 2000, penaltyAmount: 500 });
+            await setting.save();
+        }
+        res.status(200).json({ success: true, data: setting });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+};
+
+exports.updateSettings = async (req, res) => {
+    try {
+        let setting = await MaintenanceSetting.findOne();
+        if(!setting) setting = new MaintenanceSetting(req.body);
+        else {
+            setting.maintenanceAmount = req.body.maintenanceAmount;
+            setting.penaltyAmount = req.body.penaltyAmount;
+        }
+        await setting.save();
+        res.status(200).json({ success: true, data: setting });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+};
 
 // 1. Create a Maintenance Bill (Admin)
 exports.createBill = async (req, res) => {
