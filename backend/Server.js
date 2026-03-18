@@ -16,6 +16,7 @@ const complaint = require("./src/Route/ComplainRoute");
 const notice = require("./src/Route/NoticeRoute");
 const visitor = require("./src/Route/VisitorRoute");
 const totalExpense = require("./src/Route/TotalExpenseRoute");
+const facility = require("./src/Route/FacilityRoute");
 
 /* DATABASE */
 
@@ -38,6 +39,7 @@ app.use("/api/complaint", complaint);
 app.use("/api/notice", notice);
 app.use("/api/visitor", visitor);
 app.use("/api/totalExpense", totalExpense);
+app.use("/api/facilities", facility);
 
 /* TEST */
 

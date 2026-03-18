@@ -1,15 +1,18 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const facilityController = require("../controllers/facilityController");
+const facilityController = require('../Controller/FacilityController');
 
-// Basic CRUD routes
-router.route("/")
-    .post(facilityController.createFacility)
-    .get(facilityController.getAllFacilities);
+// Basic CRUD for Facilities
+router.get('/', facilityController.getAllFacilities);
+router.post('/', facilityController.createFacility);
+router.put('/:id', facilityController.updateFacility);
+router.delete('/:id', facilityController.deleteFacility);
 
-router.route("/:id")
-    .get(facilityController.getFacilityById)
-    .put(facilityController.updateFacility)
-    .delete(facilityController.deleteFacility);
+// Bookings
+router.post('/book', facilityController.bookFacility);
+router.get('/booked-slots', facilityController.getBookedSlots);
+router.get('/bookings', facilityController.getAllBookings);
+router.put('/bookings/:id/status', facilityController.updateBookingStatus); // Admin approve/reject
+router.put('/bookings/:id/cancel', facilityController.cancelBooking);
 
 module.exports = router;

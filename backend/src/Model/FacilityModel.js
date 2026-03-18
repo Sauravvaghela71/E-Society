@@ -7,6 +7,7 @@ const facilitySchema = new mongoose.Schema({
          required: true },
     openingTime: { type: String, required: true }, // e.g., "09:00 AM"
     closingTime: { type: String, required: true }, // e.g., "09:00 PM"
+    price: { type: Number, required: true, default: 0 },
     status: { 
         type: String, 
         enum: ['Available', 'Maintenance', 'closed'], 
