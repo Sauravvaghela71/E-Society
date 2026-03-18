@@ -1,6 +1,7 @@
 const Security = require("../Model/SecurityModel");
 const User = require("../Model/UserModel");
 const bcrypt = require("bcryptjs");
+const mailSend = require("../Util/MailSend");
 
 /* ---------------- LOGIN SECURITY (NEW) ---------------- */
 exports.loginSecurity = async (req, res) => {
@@ -72,6 +73,30 @@ exports.createSecurity = async (req, res) => {
 
     // Save both simultaneously
     await Promise.all([security.save(), user.save()]);
+
+    // Send Welcome Email with Login Credentials
+    try {
+      const subject = "Welcome to E-Society: Your Guard Login Credentials";
+      const message = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+          <h2 style="color: #1e3a8a;">Welcome to the E-Society Guard Team!</h2>
+          <p>Hello <strong>${rest.firstName} ${rest.lastName || ''}</strong>,</p>
+          <p>Your security guard account has been successfully created by the administrator. You can now log into the Guard Dashboard to manage visitors, receive emergency alerts, and view notices.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; color: #4b5563;"><strong>Login Email:</strong> ${rest.email}</p>
+            <p style="margin: 10px 0 0; color: #4b5563;"><strong>Password:</strong> ${password}</p>
+          </div>
+          
+          <p style="color: #dc2626; font-size: 13px;"><em>Please do not share these credentials with anyone.</em></p>
+          <p>Best Regards,<br/>Society Administration</p>
+        </div>
+      `;
+      // Run email process in background
+      mailSend(rest.email, subject, message).catch(err => console.error("Guard email send failed:", err.message));
+    } catch (mailError) {
+      console.error("Failed to trigger welcome email stream:", mailError);
+    }
 
     res.status(201).json(security);
   } catch (error) {
