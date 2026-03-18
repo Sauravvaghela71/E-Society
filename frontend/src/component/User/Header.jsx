@@ -44,7 +44,7 @@ const Header = () => {
       : user.email
       ? user.email.split("@")[0]
       : "Guest User",
-    subText: role === "admin" ? "Admin" : role === "security" ? "Security" : "Resident",
+    subText: isAdmin ? "Admin" : isSecurity ? "Security Guard" : "Resident",
     profilePic:
       user.profilePic ||
       `https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName || user.email || "U"}`,
@@ -56,7 +56,7 @@ const Header = () => {
     ? "/security/dashboard"
     : "/user";
 
-  const profilePath = isAdmin ? "/admin/dashboard" : "/user/profile";
+  const profilePath = isAdmin ? "/admin/dashboard" : isSecurity ? "/security/dashboard" : "/user/profile";
 
   const handleConfirmLogout = () => {
     localStorage.clear();

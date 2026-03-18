@@ -24,6 +24,7 @@ import UserProfile from "../component/User/UserProfile";
 import UserDashboard from "../component/User/UserDashboard";
 import UserComplaint from "../component/User/Complain";
 import UserVisitor from "../component/User/Visitor";
+import UserMaintenance from "../component/User/Maintenance";
 import FlatDetails from "../component/Admin/FlatDetails";
 import GuardLayout from "../component/Guard/GuardLayout";
 import GuardDashboard from "../component/Guard/GuardDashboard";
@@ -156,6 +157,10 @@ const router = createBrowserRouter([
       {
         path: "facilities",
         element: <FacilityBooking />
+      },
+      {
+        path: "maintenance",
+        element: <UserMaintenance />
       }
     ]
   },

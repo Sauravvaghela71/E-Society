@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
-  User, Bell, ShieldCheck, MessageCircle, 
-  Calendar, CreditCard, Clock, Activity
+  User, Bell, ShieldCheck, MessageCircle,
+  Calendar, CreditCard, Clock, Activity, Wallet
 } from "lucide-react";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  
+
   // Real-time data states
   const [notices, setNotices] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
@@ -39,7 +39,7 @@ export default function UserDashboard() {
       try {
         setLoading(true);
         const profileId = currentUser.profileid || currentUser._id;
-        
+
         // Fetch all relevant data concurrently
         const [noticeRes, bookingRes, visitorRes, complaintRes, profileRes] = await Promise.allSettled([
           axios.get("http://localhost:5100/api/notice"),
@@ -53,9 +53,9 @@ export default function UserDashboard() {
         let activeUser = { ...currentUser };
         if (profileRes.status === "fulfilled" && profileRes.value.data) {
            const residentData = profileRes.value.data;
-           activeUser = { 
-               ...activeUser, 
-               firstName: residentData.firstName || residentData.Name || activeUser.email?.split('@')[0], 
+           activeUser = {
+               ...activeUser,
+               firstName: residentData.firstName || residentData.Name || activeUser.email?.split('@')[0],
                lastName: residentData.lastName || "",
                blockWing: residentData.blockWing || "",
                flatNumber: residentData.flatNumber || ""
@@ -81,7 +81,7 @@ export default function UserDashboard() {
         if (visitorRes.status === "fulfilled") {
           const allVisitors = Array.isArray(visitorRes.value.data) ? visitorRes.value.data : visitorRes.value.data?.data || [];
           // If the visitor's wing/flat matches the resident's wing/flat
-          setMyVisitors(allVisitors.filter(v => 
+          setMyVisitors(allVisitors.filter(v =>
              (v.blockWing === currentUser.blockWing && String(v.flatNumber) === String(currentUser.flatNumber)) ||
              v.visitingResident === profileId
           ).slice(0, 3));
@@ -116,13 +116,14 @@ export default function UserDashboard() {
     { title: "My Profile", icon: <User size={24}/>, path: "/user/profile", color: "text-blue-600 bg-blue-50", count: null },
     { title: "Amenities", icon: <Calendar size={24}/>, path: "/user/facilities", color: "text-green-600 bg-green-50", count: myBookings.length },
     { title: "My Complaints", icon: <MessageCircle size={24}/>, path: "/user/complaint", color: "text-orange-600 bg-orange-50", count: myComplaints.length },
-    { title: "Visitor Logs", icon: <ShieldCheck size={24}/>, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length }
+    { title: "Visitor Logs", icon: <ShieldCheck size={24}/>, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length },
+    { title: "Maintenance Bills", icon: <Wallet size={24}/>, path: "/user/maintenance", color: "text-emerald-600 bg-emerald-50", count: null }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 md:px-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
-        
+
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 md:p-12 text-white shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
@@ -139,9 +140,9 @@ export default function UserDashboard() {
         {/* Quick Links / Counters Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {features.map((feature, idx) => (
-            <div 
-              key={idx} 
-              onClick={() => navigate(feature.path)}
+            <Link
+              key={idx}
+              to={feature.path}
               className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:-translate-y-1 transition-all group flex flex-col justify-between"
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
@@ -155,7 +156,7 @@ export default function UserDashboard() {
                   </p>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
