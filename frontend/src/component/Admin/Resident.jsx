@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 export default function ResidentForm() {
   const [showForm, setShowForm] = useState(false);
   const [user, setUser] = useState([]);
+  const [flats, setFlats] = useState([]);
+  const [showFlatMap, setShowFlatMap] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editId, setEditId] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -12,10 +14,31 @@ export default function ResidentForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors }
   } = useForm();
 
-  // 1. Image Preview logic
+  // 1. Initial Fetch
+  useEffect(() => {
+    fetchUsers();
+    fetchFlats();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("http://localhost:5100/api/residents");
+      setUser(res.data.data || res.data || []);
+    } catch (err) {}
+  };
+
+  const fetchFlats = async () => {
+    try {
+      const res = await axios.get("http://localhost:5100/api/flats");
+      setFlats(res.data.data || []);
+    } catch (err) {}
+  };
+
+  // 1b. Image Preview logic
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -61,6 +84,7 @@ export default function ResidentForm() {
         setUser((prev) => [...prev, newObj]);
         alert("Resident Added Successfully!");
       }
+      fetchFlats(); // REFRESH FLAT MAP immediately!
       closeForm();
     } catch (error) {
       console.error("Submission Error:", error.response?.data || error.message);
@@ -74,6 +98,7 @@ export default function ResidentForm() {
     try {
       await axios.delete(`http://localhost:5100/api/residents/${id}`);
       setUser((prev) => prev.filter((u) => u._id !== id));
+      fetchFlats(); // REFRESH FLAT MAP
     } catch (error) {
       console.error("Delete error:", error);
       alert("Error deleting resident");
@@ -175,11 +200,21 @@ export default function ResidentForm() {
 
           {/* Flat Details */}
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Flat Details</h2>
+            <div className="flex justify-between items-center mb-5 border-b pb-2">
+               <h2 className="text-lg font-semibold text-blue-600">Flat Details</h2>
+               <button 
+                 type="button" 
+                 onClick={() => setShowFlatMap(true)}
+                 className="bg-indigo-600 animate-pulse text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition"
+               >
+                 View & Select Flat Map
+               </button>
+            </div>
+            
             <div className="grid md:grid-cols-3 gap-5">
-              <Input label="Wing" required error={errors.wing} register={register("wing", { required: "Wing required" })} />
-              <Input label="Flat Number" required error={errors.flatNumber} register={register("flatNumber", { required: "Flat number required" })} />
-              <Input type="number" label="Floor" register={register("floor", { required: "Floor required" })} />
+              <Input label="Wing" required error={errors.wing} register={register("wing", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
+              <Input label="Flat Number" required error={errors.flatNumber} register={register("flatNumber", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
+              <Input type="number" label="Floor" register={register("floor", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
             </div>
           </div>
 
@@ -313,19 +348,113 @@ export default function ResidentForm() {
           )}
         </div>
       )}
+
+      {/* Flat Map Modal Popup */}
+      {showFlatMap && (
+        <FlatMapModal 
+          flats={flats} 
+          onClose={() => setShowFlatMap(false)} 
+          onSelect={(flat) => {
+            setValue("wing", flat.wing);
+            setValue("flatNumber", flat.flatNumber);
+            setValue("floor", flat.floor);
+            setShowFlatMap(false);
+          }} 
+        />
+      )}
+
+    </div>
+  );
+}
+
+// Flat Map Component
+function FlatMapModal({ flats, onClose, onSelect }) {
+  const uniqueWings = [...new Set(flats.map(f => f.wing))].sort();
+  const [activeWing, setActiveWing] = useState(uniqueWings[0] || "A");
+
+  const wingFlats = flats.filter(f => f.wing === activeWing);
+  const floors = [...new Set(wingFlats.map(f => f.floor))].sort((a,b) => b - a); // descending so top floor is top visually
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95">
+        
+        {/* Modal Header */}
+        <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Society Flat Navigator</h2>
+            <p className="text-gray-500 font-medium text-sm mt-1">Select an empty green (Vacant) flat to assign it to this resident.</p>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all text-2xl leading-none">&times;</button>
+        </div>
+
+        {/* Tab Header (Wings) */}
+        <div className="flex gap-2 p-6 bg-white border-b border-gray-100 overflow-x-auto">
+          {uniqueWings.map(wing => (
+            <button 
+              key={wing}
+              onClick={() => setActiveWing(wing)}
+              className={`px-6 py-2 rounded-xl font-bold transition-all whitespace-nowrap ${activeWing === wing ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              Wing {wing}
+            </button>
+          ))}
+        </div>
+
+        {/* Body (Floors Grid) */}
+        <div className="p-6 bg-slate-50 overflow-y-auto flex-1 space-y-8">
+          {floors.map(floor => (
+            <div key={floor} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Floor {floor}</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {wingFlats.filter(f => f.floor === floor).sort((a,b) => a.flatNumber.localeCompare(b.flatNumber)).map(flat => {
+                  const isVacant = flat.status === "Vacant";
+                  return (
+                    <div 
+                      key={flat._id} 
+                      onClick={() => isVacant && onSelect(flat)}
+                      className={`relative p-4 rounded-xl border-2 transition-all group ${
+                        isVacant 
+                        ? 'border-green-400 bg-green-50 cursor-pointer hover:bg-green-500 hover:border-green-600' 
+                        : 'border-slate-200 bg-slate-100 cursor-not-allowed opacity-75'
+                      }`}
+                    >
+                      <span className={`block text-lg font-black ${isVacant ? 'text-green-700 group-hover:text-white' : 'text-slate-500'}`}>
+                        {flat.flatNumber}
+                      </span>
+                      <span className={`mt-1 inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
+                        isVacant 
+                        ? 'bg-green-200 text-green-800 group-hover:bg-green-400 group-hover:text-white' 
+                        : 'bg-slate-200 text-slate-500'
+                      }`}>
+                        {flat.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }
 
 // Reusable Input Component
-function Input({ label, register, error, required, type = "text" }) {
+function Input({ label, register, error, required, type = "text", readOnly, onClick, placeholder }) {
   return (
-    <div>
+    <div onClick={onClick}>
       <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
       <input
         type={type}
         {...register}
-        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${
+          error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"
+        } ${readOnly ? "bg-gray-100 cursor-pointer" : "bg-white"}`}
       />
       {error && <p className="text-red-500 text-xs mt-1 font-medium">{error.message}</p>}
     </div>

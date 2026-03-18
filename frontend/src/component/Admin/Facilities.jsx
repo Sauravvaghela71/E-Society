@@ -21,7 +21,10 @@ export default function Facilities() {
       const [resFac, resBook] = await Promise.all([
         axios.get(API_URL),
         axios.get(`${API_URL}/bookings`)
+        
       ]);
+      console.log(resFac.data);
+      console.log(resBook.data);
       setFacilities(resFac.data.data || []);
       setBookings(resBook.data.data || []);
     } catch (err) {
