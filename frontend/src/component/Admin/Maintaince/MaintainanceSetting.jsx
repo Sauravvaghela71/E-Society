@@ -9,6 +9,8 @@ export default function MaintainanceSetting() {
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [settings, setSettings] = useState({ maintenanceAmount: 2000, penaltyAmount: 500 });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const API_URL = "http://localhost:5100/api/maintenance";
 
@@ -17,10 +19,14 @@ export default function MaintainanceSetting() {
       setLoading(true);
       const [resBills, resResidents] = await Promise.all([
         axios.get(API_URL),
-        axios.get("http://localhost:5100/api/residents")
+        axios.get("http://localhost:5100/api/residents"),
+        axios.get(`${API_URL}/settings`)
       ]);
       setBills(resBills.data.data || []);
       setResidents(resResidents.data.data || resResidents.data || []);
+      if(resSettings.data.data) {
+        setSettings(resSettings.data.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -31,6 +37,44 @@ export default function MaintainanceSetting() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleUpdateSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await axios.put(`${API_URL}/settings`, settings);
+      alert("Society Settings Updated successfully!");
+    } catch (e) {
+      alert("Failed to update settings.");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const generateAutoMonthly = async () => {
+    const confirmation = window.confirm(`Generate regular monthly bills of ₹${settings.maintenanceAmount} for ALL residents?`);
+    if(!confirmation) return;
+    
+    try {
+       const nextMonth = new Date();
+       nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+       const promises = residents.map(r => axios.post(API_URL, {
+          residentId: r._id,
+          billName: `${new Date().toLocaleString('default', { month: 'long' })} Monthly Maintenance`,
+          billType: "Regular Maintenance",
+          amount: settings.maintenanceAmount,
+          dueDate: nextMonth,
+          status: "Pending",
+          details: `Standard Monthly Charge: ₹${settings.maintenanceAmount}`
+       }));
+       await Promise.all(promises);
+       alert("Auto-Generated Monthly Bills successfully for ALL residents!");
+       fetchData();
+    } catch (err) {
+       alert("Error auto-generating bills.");
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -68,20 +112,51 @@ export default function MaintainanceSetting() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-gray-800">Maintenance & Billing</h1>
-              <p className="text-gray-500 text-sm mt-1">Generate society bills, event fees, and penalties.</p>
+              <p className="text-gray-500 text-sm mt-1">Configure global society settings and generate manual invoices.</p>
             </div>
           </div>
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all"
-            >
-              <Plus size={18} /> Generate New Bill
-            </button>
-          )}
+          <div className="flex gap-3">
+             <button
+               onClick={generateAutoMonthly}
+               className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all whitespace-nowrap"
+             >
+               Auto-Gen Monthly Bills
+             </button>
+            {!showForm && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all whitespace-nowrap"
+              >
+                <Plus size={18} /> Generate Custom
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* CREATE BILL FORM */}
+        {/* Global Settings Viewer & Form */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 lg:items-center">
+            <div className="md:w-1/3">
+              <h2 className="text-lg font-bold text-gray-800">Society Rate Settings</h2>
+              <p className="text-xs text-gray-400 mt-1 font-semibold leading-relaxed">
+                 Configure standard global rates. The Auto-Gen button strictly references these explicit values.
+              </p>
+            </div>
+            <form onSubmit={handleUpdateSettings} className="flex-1 grid md:grid-cols-3 gap-4 items-end">
+               <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Standard Maintenance (₹)</label>
+                  <input type="number" value={settings.maintenanceAmount} onChange={e => setSettings({...settings, maintenanceAmount: Number(e.target.value)})} className="w-full border p-2.5 rounded-xl bg-gray-50 outline-none focus:border-blue-500 font-bold" />
+               </div>
+               <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Penalty / Late Fee (₹)</label>
+                  <input type="number" value={settings.penaltyAmount} onChange={e => setSettings({...settings, penaltyAmount: Number(e.target.value)})} className="w-full border p-2.5 rounded-xl bg-gray-50 outline-none focus:border-blue-500 font-bold" />
+               </div>
+               <button type="submit" disabled={savingSettings} className={`w-full py-2.5 font-bold text-white rounded-xl transition-all shadow-md ${savingSettings ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                 {savingSettings ? 'Saving...' : 'Save Settings'}
+               </button>
+            </form>
+        </div>
+
+        {/* CREATE CUSTOM BILL FORM */}
         {showForm && (
           <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 animate-in fade-in">
             <h2 className="text-xl font-bold mb-6 text-gray-800">Create Billing Record</h2>
@@ -126,6 +201,12 @@ export default function MaintainanceSetting() {
                     <input type="date" {...register("dueDate", { required: true })} className="w-full border p-3 rounded-xl focus:border-blue-500 outline-none" />
                   </div>
                 </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Charge Details / Breakdown</label>
+                  <textarea {...register("details")} placeholder="e.g. Water Bill: ₹500, Lift Maintenance: ₹1000, Security: ₹1000" className="w-full border p-3 rounded-xl focus:border-blue-500 outline-none h-20 bg-white" />
+                  <p className="text-[10px] text-gray-400 font-bold mt-1">Residents will see exactly what items this charge covers.</p>
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4 border-t border-gray-100">
@@ -163,6 +244,7 @@ export default function MaintainanceSetting() {
                      <td className="p-4">
                        <p className="font-bold text-gray-800">{b.billName}</p>
                        <p className="text-xs font-bold text-indigo-500 mt-0.5">{b.billType}</p>
+                       {b.details && <p className="text-[10px] text-gray-500 w-48 truncate mt-1 border-l-2 border-slate-300 pl-1">{b.details}</p>}
                        <p className="text-[10px] text-gray-400 uppercase font-bold mt-1 shadow-sm inline-block px-1 border border-gray-200 rounded">
                          Due: {new Date(b.dueDate).toLocaleDateString()}
                        </p>

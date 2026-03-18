@@ -109,7 +109,8 @@ export default function UserMaintenance() {
                     </div>
                     
                     <h3 className="font-black text-xl text-gray-800 leading-tight">{b.billName}</h3>
-                    <p className="text-3xl font-black text-gray-900 mt-2 leading-none tracking-tight">
+                    {b.details && <p className="text-sm text-gray-500 mt-2 font-medium italic pr-4">{b.details}</p>}
+                    <p className="text-3xl font-black text-gray-900 mt-3 leading-none tracking-tight">
                        ₹{b.amount.toLocaleString()}
                     </p>
                   </div>
