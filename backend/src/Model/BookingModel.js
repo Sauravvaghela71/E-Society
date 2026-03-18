@@ -29,6 +29,10 @@ const bookingSchema = new mongoose.Schema({
         enum: ['Pending', 'Completed', 'Failed'], 
         default: 'Completed' // auto-completed for now
     },
+    adminResponse: {
+        type: String,
+        default: ''
+    },
     amountPaid: {
         type: Number,
         required: true

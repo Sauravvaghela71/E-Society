@@ -135,8 +135,11 @@ exports.cancelBooking = async (req, res) => {
 // Update booking status (For Admin to Approve/Reject)
 exports.updateBookingStatus = async (req, res) => {
     try {
-        const { status } = req.body;
-        const booking = await Booking.findByIdAndUpdate(req.params.id, { status }, { new: true });
+        const { status, adminResponse } = req.body;
+        const _update = { status };
+        if (adminResponse !== undefined) _update.adminResponse = adminResponse;
+
+        const booking = await Booking.findByIdAndUpdate(req.params.id, _update, { new: true });
         if (!booking) return res.status(404).json({ message: "Booking not found" });
         res.status(200).json({ success: true, data: booking });
     } catch (error) {
