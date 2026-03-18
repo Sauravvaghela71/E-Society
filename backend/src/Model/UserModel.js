@@ -22,8 +22,8 @@ const userSchema = new Schema({
     password: { type: String, required: true },
     role: {
         type: String,
-        default: "user",
-        enum: ["resident", "admin", "security"]
+        default: "resident",
+        enum: ["user", "resident", "admin", "security", "guard"]
     },
    
     // profileModel: {
