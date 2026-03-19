@@ -123,6 +123,11 @@ export default function AdminComplaint() {
                     <p className="text-xs text-gray-500 max-w-[200px] truncate" title={comp.description}>
                       {comp.description}
                     </p>
+                    {comp.photo && (
+                      <a href={comp.photo} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline font-bold mt-1 inline-block bg-blue-50 px-2 py-0.5 rounded">
+                        View Attached Photo
+                      </a>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-700">Flat: {comp.flat || "-"} / Wing: {comp.wing || "-"}</p>
@@ -169,6 +174,14 @@ export default function AdminComplaint() {
                 <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Description</span>
                 <p className="text-gray-700 bg-gray-50 p-3 rounded-lg border mt-1">{selectedComplaint.description}</p>
               </div>
+              {selectedComplaint.photo && (
+                <div>
+                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Attached Photo Proof</span>
+                  <div className="mt-1 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center p-2">
+                     <img src={selectedComplaint.photo} alt="Proof" className="max-h-48 object-contain rounded" />
+                  </div>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleUpdate} className="space-y-4">

@@ -15,6 +15,7 @@ export default function UserDashboard() {
   const [myBookings, setMyBookings] = useState([]);
   const [myVisitors, setMyVisitors] = useState([]);
   const [myComplaints, setMyComplaints] = useState([]);
+  const [showAllNotices, setShowAllNotices] = useState(false);
 
   // Get current user details from local storage
   const [currentUser, setCurrentUser] = useState(null);
@@ -39,58 +40,78 @@ export default function UserDashboard() {
       try {
         setLoading(true);
         const profileId = currentUser.profileid || currentUser._id;
+        const userEmail = currentUser.email;
 
-        // Fetch all relevant data concurrently
-        const [noticeRes, bookingRes, visitorRes, complaintRes, profileRes] = await Promise.allSettled([
-          axios.get("http://localhost:5100/api/notice"),
-          axios.get("http://localhost:5100/api/facilities/bookings"),
-          axios.get("http://localhost:5100/api/visitor"),
-          axios.get("http://localhost:5100/api/complaint"),
-          axios.get(`http://localhost:5100/api/residents/${profileId}`)
-        ]);
+        // ── Step 1: Resolve resident profile (email-first for reliability) ──
+        let residentData = null;
+        try {
+          // Primary: look up by email (works even if profileid is missing in localStorage)
+          if (userEmail) {
+            const emailRes = await axios.get(`http://localhost:5100/api/residents/by-email/${encodeURIComponent(userEmail)}`);
+            if (emailRes.data) residentData = emailRes.data;
+          }
+        } catch (_) { /* not found by email */ }
 
-        // Merge fetched profile data with currentUser
+        if (!residentData && profileId) {
+          // Fallback: look up by profileid/userId
+          try {
+            const idRes = await axios.get(`http://localhost:5100/api/residents/${profileId}`);
+            if (idRes.data) residentData = idRes.data;
+          } catch (_) {}
+        }
+
+        // Merge resident data into activeUser immediately
         let activeUser = { ...currentUser };
-        if (profileRes.status === "fulfilled" && profileRes.value.data) {
-           const residentData = profileRes.value.data;
-           activeUser = {
-               ...activeUser,
-               firstName: residentData.firstName || residentData.Name || activeUser.email?.split('@')[0],
-               lastName: residentData.lastName || "",
-               blockWing: residentData.blockWing || "",
-               flatNumber: residentData.flatNumber || ""
-           };
-           setCurrentUser(activeUser); // Updates screen state immediately
+        if (residentData) {
+          activeUser = {
+            ...activeUser,
+            firstName: residentData.firstName || activeUser.firstName || activeUser.Name || activeUser.email?.split('@')[0],
+            lastName: residentData.lastName || activeUser.lastName || "",
+            blockWing: residentData.wing || residentData.blockWing || activeUser.blockWing || "",
+            flatNumber: residentData.flatNumber || activeUser.flatNumber || "",
+            residentMongoId: residentData._id, // store resident's actual _id for visitor lookups
+          };
+          setCurrentUser(activeUser);
+          // Persist updated data to localStorage so next time it works offline
+          localStorage.setItem("user", JSON.stringify({ ...JSON.parse(localStorage.getItem("user") || "{}"), ...activeUser }));
         }
         setHasFetched(true);
 
-        // Process Notices (Only active)
+        const resolvedProfileId = residentData?._id || profileId;
+
+        // ── Step 2: Fetch rest of dashboard data concurrently ──
+        const [noticeRes, bookingRes, visitorRes, complaintRes] = await Promise.allSettled([
+          axios.get("http://localhost:5100/api/notice"),
+          axios.get("http://localhost:5100/api/facilities/bookings"),
+          residentData?._id
+            ? axios.get(`http://localhost:5100/api/visitor/resident/${residentData._id}`)
+            : axios.get("http://localhost:5100/api/visitor"),
+          axios.get("http://localhost:5100/api/complaint"),
+        ]);
+
+        // Process Notices (All)
         if (noticeRes.status === "fulfilled") {
           const allNotices = Array.isArray(noticeRes.value.data) ? noticeRes.value.data : noticeRes.value.data?.data || [];
-          setNotices(allNotices.filter(n => n.status === "Active").slice(0, 3));
+          setNotices(allNotices);
         }
 
         // Process Bookings (Filter for current user)
         if (bookingRes.status === "fulfilled") {
           const allBookings = Array.isArray(bookingRes.value.data) ? bookingRes.value.data : bookingRes.value.data?.data || [];
-          setMyBookings(allBookings.filter(b => b.resident?._id === profileId || b.resident === profileId).slice(0, 3));
+          setMyBookings(allBookings.filter(b => b.resident?._id === resolvedProfileId || b.resident === resolvedProfileId).slice(0, 3));
         }
 
-        // Process Visitors (Filter by exact wing/flat)
-        // Note: visitor API might not link directly to profileId in all cases, so checking wing/flat as well
+        // Process Visitors
         if (visitorRes.status === "fulfilled") {
-          const allVisitors = Array.isArray(visitorRes.value.data) ? visitorRes.value.data : visitorRes.value.data?.data || [];
-          // If the visitor's wing/flat matches the resident's wing/flat
-          setMyVisitors(allVisitors.filter(v =>
-             (v.blockWing === currentUser.blockWing && String(v.flatNumber) === String(currentUser.flatNumber)) ||
-             v.visitingResident === profileId
-          ).slice(0, 3));
+          const visitorPayload = visitorRes.value.data;
+          const visitorArray = visitorPayload?.data || (Array.isArray(visitorPayload) ? visitorPayload : []);
+          setMyVisitors(visitorArray.slice(0, 3));
         }
 
         // Process Complaints (Filter by user)
         if (complaintRes.status === "fulfilled") {
            const allComplaints = Array.isArray(complaintRes.value.data) ? complaintRes.value.data : complaintRes.value.data?.data || [];
-           setMyComplaints(allComplaints.filter(c => c.complainer?._id === profileId || c.complainer === profileId).slice(0, 3));
+           setMyComplaints(allComplaints.filter(c => c.complainer?._id === resolvedProfileId || c.complainer === resolvedProfileId).slice(0, 3));
         }
 
       } catch (err) {
@@ -102,6 +123,7 @@ export default function UserDashboard() {
 
     fetchDashboardData();
   }, [currentUser, hasFetched]);
+
 
   if (loading || !currentUser) {
     return (
@@ -170,20 +192,26 @@ export default function UserDashboard() {
                 <Bell className="text-purple-500" /> Society Notices
               </h2>
             </div>
-            <div className="space-y-4 flex-1">
+            <div className="space-y-4 flex-1 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
               {notices.length === 0 ? (
                 <p className="text-gray-400 text-sm text-center py-4 font-medium">No active notices.</p>
-              ) : notices.map(notice => (
+              ) : notices.slice(0, showAllNotices ? notices.length : 1).map(notice => (
                 <div key={notice._id} className="border-l-4 border-purple-500 pl-4 py-2 opacity-90 hover:opacity-100 transition-opacity">
-                  <h3 className="font-bold text-gray-800 line-clamp-1">{notice.title}</h3>
-                  <p className="text-xs text-gray-500 line-clamp-2 mt-1">{notice.description}</p>
+                  <h3 className="font-bold text-gray-800">{notice.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">{notice.description}</p>
                   <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase">
-                    {new Date(notice.date).toLocaleDateString()}
+                    {new Date(notice.noticeDate).toLocaleDateString()}
                   </p>
                 </div>
               ))}
             </div>
-            <button className="mt-4 w-full text-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors p-2 bg-blue-50 rounded-lg">View All Notices</button>
+            {notices.length > 1 && (
+              <button 
+                onClick={() => setShowAllNotices(!showAllNotices)} 
+                className="mt-4 w-full text-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors p-2 bg-blue-50 rounded-lg">
+                {showAllNotices ? "Show Less" : "View All Notices"}
+              </button>
+            )}
           </div>
 
           {/* Visitors Feed */}

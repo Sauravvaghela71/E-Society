@@ -24,36 +24,44 @@ export default function UserVisitor() {
         setLoading(true);
         const currentUser = getCurrentUser();
         const profileId = currentUser.profileid || currentUser._id;
-        
-        // As a resident we want to fetch resident data, so we'll grab currentUser details again if they exist
-        // or we'll fetch them if missing, but typically they are in local storage by now
+
+        // Primary: fetch visitors linked directly to this resident's ID
+        const residentSpecificRes = await axios.get(
+          `http://localhost:5100/api/visitor/resident/${profileId}`
+        ).catch(() => null);
+
+        const linkedVisitors = residentSpecificRes?.data?.data || [];
+
+        // Secondary: also fetch all visitors and filter by wing/flat as a fallback
+        // (covers cases where guard did NOT select a resident from the dropdown)
         const residentRes = await axios.get(`http://localhost:5100/api/residents/${profileId}`).catch(() => null);
-        let residentData = null;
-        if (residentRes && residentRes.data) {
-          residentData = residentRes.data;
-        }
+        const residentData = residentRes?.data || {};
+        const wing = residentData.blockWing || residentData.wing || currentUser.blockWing;
+        const flat = String(residentData.flatNumber || currentUser.flatNumber || "");
 
-        const wing = residentData?.blockWing || currentUser.blockWing;
-        const flat = residentData?.flatNumber || currentUser.flatNumber;
+        const allRes = await axios.get("http://localhost:5100/api/visitor").catch(() => null);
+        const allVisitors = allRes?.data?.data || allRes?.data || [];
 
-        const res = await axios.get(API_URL);
-        const allVisitors = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        // Flat+wing matched visitors not already in linkedVisitors
+        const linkedIds = new Set(linkedVisitors.map(v => v._id));
+        const flatMatches = Array.isArray(allVisitors)
+          ? allVisitors.filter(
+              v => !linkedIds.has(v._id) &&
+                   wing && flat &&
+                   v.blockWing === wing &&
+                   String(v.flatNumber) === flat
+            )
+          : [];
 
-        // Filter the dataset to only visitors arriving at the logged-in resident's exact Wing & Flat Number
-        const myVisitors = allVisitors.filter(v => 
-          (v.blockWing === wing && String(v.flatNumber) === String(flat)) ||
-          v.visitingResident === profileId
-        );
-
-        // Sort descending by expected time / date
-        setVisitors(myVisitors.sort((a,b) => new Date(b.date) - new Date(a.date)));
+        const merged = [...linkedVisitors, ...flatMatches];
+        setVisitors(merged.sort((a, b) => new Date(b.entryTime || b.createdAt) - new Date(a.entryTime || a.createdAt)));
       } catch (err) {
         console.error("Error fetching visitors:", err);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchVisitors();
   }, []);
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Mail, Phone, MapPin, Calendar, Edit3, Camera, MessageSquare, Clock, CheckCircle, AlertCircle, Loader, Users } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Edit3, Camera, MessageSquare, Clock, CheckCircle, AlertCircle, Loader, Users, Bell } from 'lucide-react';
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -10,6 +10,9 @@ const UserProfile = () => {
   const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [visitors, setVisitors] = useState([]);
   const [visitorsLoading, setVisitorsLoading] = useState(true);
+  const [notices, setNotices] = useState([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
+  const [showAllNotices, setShowAllNotices] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -20,6 +23,7 @@ const UserProfile = () => {
       setFormData(storedUser);
       fetchComplaints(storedUser._id);
       fetchVisitors(storedUser._id);
+      fetchNotices();
     }
   }, []);
 
@@ -44,6 +48,19 @@ const UserProfile = () => {
       console.error("Error fetching visitors:", err);
     } finally {
       setVisitorsLoading(false);
+    }
+  };
+
+  const fetchNotices = async () => {
+    try {
+      setNoticesLoading(true);
+      const res = await axios.get(`http://localhost:5100/api/notice`);
+      const allNotices = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setNotices(allNotices);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setNoticesLoading(false);
     }
   };
 
@@ -188,8 +205,58 @@ const UserProfile = () => {
         </button>
       </div>
 
+      {/* SOCIETY NOTICES SECTION */}
+      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-slate-100 mt-6">
+        <div className="flex items-center gap-3 mb-6 border-b pb-4">
+          <Bell size={22} className="text-purple-600" />
+          <h2 className="text-xl font-bold text-slate-800">Society Notices</h2>
+          <span className="ml-auto text-sm font-bold bg-purple-50 text-purple-600 px-3 py-1 rounded-full">
+            {notices.length} Total
+          </span>
+        </div>
+
+        {noticesLoading ? (
+          <p className="text-center text-gray-400 py-6">Loading notices...</p>
+        ) : notices.length === 0 ? (
+          <div className="text-center py-10 text-slate-400">
+            <Bell size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="font-semibold">No active notices.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+            {notices.slice(0, showAllNotices ? notices.length : 1).map((notice) => (
+              <div
+                key={notice._id}
+                className="border-l-4 border-purple-500 rounded-r-2xl p-5 hover:shadow-md transition-all bg-slate-50/50 flex flex-col justify-between"
+              >
+                <div>
+                  <h3 className="font-black text-slate-800 text-lg mb-2">{notice.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-4 whitespace-pre-line">
+                    {notice.description}
+                  </p>
+                </div>
+                
+                <div className="pt-3 border-t border-slate-200 flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  <span>Posted Date</span>
+                  <span>{new Date(notice.noticeDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+            
+            {notices.length > 1 && (
+              <button 
+                onClick={() => setShowAllNotices(!showAllNotices)} 
+                className="mt-4 w-full text-center text-sm font-bold text-purple-600 hover:text-purple-800 transition-colors p-3 bg-purple-50 rounded-xl shadow-sm hover:shadow"
+              >
+                {showAllNotices ? "Show Less Notices" : "Click to View Remaining Notices"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* MY COMPLAINTS SECTION */}
-      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-slate-100">
+      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-slate-100 mt-6">
         <div className="flex items-center gap-3 mb-6 border-b pb-4">
           <MessageSquare size={22} className="text-blue-600" />
           <h2 className="text-xl font-bold text-slate-800">My Complaints</h2>
