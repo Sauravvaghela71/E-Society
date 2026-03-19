@@ -23,6 +23,9 @@ const complainSchema = new mongoose.Schema(
             type: String,
             required: true  
         },
+        photo: {
+            type: String
+        },
         category: { 
             type: String,
             required: true

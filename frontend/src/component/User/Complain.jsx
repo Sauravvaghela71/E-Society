@@ -48,18 +48,25 @@ export default function UserComplaint() {
 
   const onSubmit = async (data) => {
     try {
-      const payload = {
-        ...data,
-        userId: userId,
-        name: residentName,
-        mobile: currentUser.mobileNumber || "N/A",
-        wing: currentUser.blockWing || "N/A",
-        flat: currentUser.flatNumber || "N/A",
-        status: "Pending",
-        priority: "Medium"
-      };
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("name", residentName);
+      formData.append("mobile", currentUser.mobileNumber || "N/A");
+      formData.append("wing", currentUser.blockWing || "N/A");
+      formData.append("flat", currentUser.flatNumber || "N/A");
+      formData.append("status", "Pending");
+      formData.append("priority", "Medium");
+      formData.append("category", data.category);
+      formData.append("location", data.location || "");
+      formData.append("description", data.description);
 
-      await axios.post(API_URL, payload);
+      if (data.photo && data.photo[0]) {
+        formData.append("photo", data.photo[0]);
+      }
+
+      await axios.post(API_URL, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       alert("Complaint submitted successfully!");
       setShowForm(false);
       reset();
@@ -152,6 +159,11 @@ export default function UserComplaint() {
                   {errors.description && <span className="text-red-500 text-xs mt-1">Required</span>}
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Photo Proof (Optional)</label>
+                  <input type="file" accept="image/*" {...register("photo")} className="w-full border-2 border-gray-100 p-2 rounded-xl focus:border-orange-500 outline-none" />
+                </div>
+
                 <div className="pt-4 flex gap-3">
                   <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Cancel</button>
                   <button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl shadow-md transition-colors">Submit Request</button>
@@ -182,6 +194,12 @@ export default function UserComplaint() {
                 </div>
                 
                 <p className="text-gray-800 font-medium mb-4 line-clamp-3">{c.description}</p>
+                
+                {c.photo && (
+                  <div className="mb-4">
+                    <img src={c.photo} alt="Proof" className="w-full h-32 object-cover rounded-xl" />
+                  </div>
+                )}
                 
                 {c.location && (
                   <p className="text-xs font-semibold text-gray-500 mb-4 flex items-center gap-1">

@@ -1,9 +1,19 @@
 const Complain = require("../Model/ComplainModel"); 
+const uploadToCloudinary = require("../Util/CloudinaryUtil");
 
 // 1. Create a new Complaint
 exports.createComplain = async (req, res) => {
     try {
-        const newComplain = new Complain(req.body);
+        let complainData = { ...req.body };
+        
+        if (req.file) {
+            const uploadRes = await uploadToCloudinary(req.file.path);
+            if (uploadRes && uploadRes.secure_url) {
+                complainData.photo = uploadRes.secure_url;
+            }
+        }
+        
+        const newComplain = new Complain(complainData);
         const savedComplain = await newComplain.save();
         res.status(201).json(savedComplain);
     } catch (error) {
