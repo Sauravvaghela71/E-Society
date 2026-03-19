@@ -28,22 +28,8 @@ exports.checkInVisitor = async (req, res) => {
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 10px; text-align: center;">
                             <p style="margin: 0; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Visitor Entry Key</p>
                             <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #1e3a8a; letter-spacing: 5px;">${visitor.visitorKey}</p>
-                        </div>
-                        <p style="margin-top: 20px; color: #4b5563;">Please ask the visitor for this key to verify their identity.</p>
+                        <p style="margin-top: 20px; color: #4b5563;">Please share this code with the visitor or directly with the security guard to approve their entry.</p>
                         <br/>
-                        <div style="text-align: center; margin-top: 20px;">
-                            <a href="http://localhost:5100/api/visitor/accept/${visitor._id}" target="_blank" rel="noopener noreferrer" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; cursor: pointer;">
-                                Accept Visitor
-                            </a>
-                        </div>
-                        <p style="margin-top: 15px; color: #9ca3af; font-size: 13px; text-align: center;">Clicking accept will notify the guard to allow them entry immediately.</p>
-                        
-                        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center;">
-                            If the button above does not work (often because email clients blook local links), please copy and paste this URL into your browser:<br/>
-                            <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; color: #1f2937; margin-top: 5px; display: inline-block; word-break: break-all;">
-                                http://localhost:5100/api/visitor/accept/${visitor._id}
-                            </code>
-                        </div>
                     </div>
                 `;
                 
