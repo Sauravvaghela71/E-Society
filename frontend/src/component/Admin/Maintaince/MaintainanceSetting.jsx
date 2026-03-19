@@ -11,7 +11,10 @@ export default function MaintainanceSetting() {
   const [showForm, setShowForm] = useState(false);
   const [settings, setSettings] = useState({ maintenanceAmount: 2000, penaltyAmount: 500 });
   const [savingSettings, setSavingSettings] = useState(false);
-
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("Card");
+  const [processingPayment, setProcessingPayment] = useState(false);
   const API_URL = "http://localhost:5100/api/maintenance";
 
   const fetchData = async () => {
@@ -73,6 +76,22 @@ export default function MaintainanceSetting() {
        fetchData();
     } catch (err) {
        alert("Error auto-generating bills.");
+    }
+  };
+
+  const handleOfflinePayment = async () => {
+    if (!selectedBill) return;
+    setProcessingPayment(true);
+    try {
+      await axios.put(`${API_URL}/${selectedBill._id}/pay`, { paymentMethod });
+      alert("Payment successful and Invoice emailed to resident!");
+      setShowPaymentModal(false);
+      setSelectedBill(null);
+      fetchData();
+    } catch (err) {
+      alert("Error processing payment.");
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -277,9 +296,17 @@ export default function MaintainanceSetting() {
                             {b.paymentMethod && <p className="text-[10px] uppercase font-bold text-gray-400 mt-1">Via {b.paymentMethod} • {new Date(b.paidAt).toLocaleDateString()}</p>}
                           </div>
                         ) : (
-                          <span className="flex items-center gap-1 text-xs font-black text-orange-600 uppercase tracking-wide bg-orange-50 px-2 py-1 rounded-lg w-fit">
-                            <Clock size={14} /> Pending
-                          </span>
+                          <div className="flex flex-col gap-2">
+                            <span className="flex items-center gap-1 text-xs font-black text-orange-600 uppercase tracking-wide bg-orange-50 px-2 py-1 rounded-lg w-fit">
+                              <Clock size={14} /> Pending
+                            </span>
+                            <button 
+                              onClick={() => { setSelectedBill(b); setShowPaymentModal(true); setPaymentMethod("Card"); }}
+                              className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 w-fit transition-all"
+                            >
+                              Pay Offline
+                            </button>
+                          </div>
                         )}
                      </td>
                    </tr>
@@ -293,6 +320,46 @@ export default function MaintainanceSetting() {
              </table>
            </div>
         </div>
+
+        {/* PAYMENT MODAL */}
+        {showPaymentModal && selectedBill && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95">
+              <h3 className="text-xl font-black text-gray-800 mb-2">Process Offline Payment</h3>
+              <p className="text-sm text-gray-500 mb-6 border-b pb-4">
+                Record a payment made by {selectedBill.residentId?.firstName} for <strong>{selectedBill.billName}</strong>.
+                <br/>Amount: <span className="font-bold text-green-600">₹{selectedBill.amount}</span>
+              </p>
+              
+              <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Payment Method</label>
+              <select 
+                value={paymentMethod} 
+                onChange={e => setPaymentMethod(e.target.value)}
+                className="w-full border p-3 rounded-xl focus:border-blue-500 outline-none mb-6 bg-gray-50 font-bold"
+              >
+                <option value="Card">Card</option>
+                <option value="UPI">UPI / QR Code</option>
+                <option value="Cash">Cash</option>
+              </select>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={handleOfflinePayment}
+                  disabled={processingPayment}
+                  className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  {processingPayment ? 'Processing...' : 'Confirm & Notify'}
+                </button>
+                <button 
+                  onClick={() => setShowPaymentModal(false)}
+                  className="bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-bold hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

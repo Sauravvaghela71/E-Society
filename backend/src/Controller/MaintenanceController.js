@@ -1,6 +1,7 @@
 const Maintenance = require("../Model/MaintenanceModel");
 const MaintenanceSetting = require("../Model/MaintenanceSettingModel");
 const Resident = require("../Model/ResidentModel");
+const mailSend = require("../Util/MailSend");
 
 // Helper: Auto-generate current month's regular maintenance bill on or after 19th
 const autoGenerateMonthlyBillsIfNeeded = async () => {
@@ -120,18 +121,59 @@ exports.getResidentBills = async (req, res) => {
     }
 };
 
-// 4. Pay Bill Action (User Side)
+// 4. Pay Bill Action (User Side / Offline Admin)
 exports.payBillOnline = async (req, res) => {
     try {
-        const { paymentMethod } = req.body; // should be 'Online' usually
+        const { paymentMethod } = req.body; 
         
         const bill = await Maintenance.findByIdAndUpdate(req.params.id, {
             status: "Paid",
             paymentMethod: paymentMethod || "Online",
             paidAt: new Date()
-        }, { new: true });
+        }, { new: true }).populate("residentId", "firstName lastName email wing flatNumber");
         
         if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
+
+        // Send Email
+        if (bill.residentId && bill.residentId.email) {
+            const htmlMessage = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #4CAF50; text-align: center;">Maintenance Payment Receipt</h2>
+                    <p>Dear <strong>${bill.residentId.firstName} ${bill.residentId.lastName}</strong>,</p>
+                    <p>Your maintenance bill has been successfully paid. Below are the details:</p>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Wing/Flat</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Wing ${bill.residentId.wing} - ${bill.residentId.flatNumber}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Bill Name</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${bill.billName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Amount Paid</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">₹${bill.amount}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Payment Method</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${bill.paymentMethod}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Date Paid</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${new Date(bill.paidAt).toLocaleDateString()}</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 20px;">You can save or print this email as your official invoice.</p>
+                    <p>Thank you!</p>
+                </div>
+            `;
+            try {
+                await mailSend(bill.residentId.email, "Maintenance Payment Receipt", htmlMessage);
+            } catch (mailErr) {
+                console.error("Error sending maintenance email", mailErr);
+            }
+        }
+
         res.status(200).json({ success: true, message: "Payment Successful!", data: bill });
         
     } catch (error) {
