@@ -10,6 +10,9 @@ router.route("/")
 // Checkout specific visitor
 router.put("/checkout/:id", visitorController.checkOutVisitor);
 
+// Get visitors array for a specific resident
+router.get("/resident/:residentId", visitorController.getResidentVisitors);
+
 // Accept specific visitor via email link
 router.get("/accept/:id", visitorController.acceptVisitor);
 

@@ -127,3 +127,13 @@ exports.deleteVisitorLog = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+// 6. Get Visitors for a specific resident (userId)
+exports.getResidentVisitors = async (req, res) => {
+    try {
+        const visitors = await Visitor.find({ visitingResident: req.params.residentId }).sort({ entryTime: -1 });
+        res.status(200).json({ success: true, count: visitors.length, data: visitors });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
