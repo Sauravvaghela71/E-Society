@@ -7,6 +7,9 @@ import autoTable from "jspdf-autotable";
 export default function UserMaintenance() {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentBill, setSelectedPaymentBill] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const getCurrentUser = () => {
     try {
@@ -37,22 +40,24 @@ export default function UserMaintenance() {
     fetchBills();
   }, []);
 
-  const handlePayment = async (billId, amount, billName) => {
-    const confirmPayment = window.confirm(`Proceed to online payment gateway for ${billName} of ₹${amount}?`);
-    if (!confirmPayment) return;
+  const initiatePayment = (bill) => {
+    setSelectedPaymentBill(bill);
+    setShowPaymentModal(true);
+  };
 
+  const handleConfirmPayment = async () => {
+    if(!selectedPaymentBill) return;
+    setProcessingPayment(true);
     try {
-      // Simulate Online Payment Processing
-      await new Promise(r => setTimeout(r, 1000));
-      
-      // Update Database
-      await axios.put(`${API_URL}/${billId}/pay`, { paymentMethod: "Online UPI/Card" });
-      
-      alert(`Payment of ₹${amount} successful!`);
-      // Refresh list to update UI
+      await axios.put(`${API_URL}/${selectedPaymentBill._id}/pay`, { paymentMethod: "Online UPI/QR" });
+      alert(`Payment of ₹${selectedPaymentBill.amount} successful!`);
+      setShowPaymentModal(false);
+      setSelectedPaymentBill(null);
       fetchBills();
     } catch (err) {
       alert("Payment failed. Please try again.");
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -213,7 +218,7 @@ export default function UserMaintenance() {
                     {pending ? (
                       <div className="flex flex-col gap-2">
                         <button 
-                          onClick={() => handlePayment(b._id, b.amount, b.billName)}
+                          onClick={() => initiatePayment(b)}
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all uppercase tracking-wider flex items-center justify-center gap-2 text-sm"
                         >
                            <CreditCard size={18} /> Pay Online Now
@@ -242,6 +247,91 @@ export default function UserMaintenance() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* PAYMENT HISTORY TABLE */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8">
+           <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+             <h2 className="text-lg font-bold text-gray-800">Payment History Table</h2>
+             <span className="bg-green-100 text-green-700 font-black text-xs px-3 py-1 rounded-full uppercase tracking-widest">{bills.filter(b => b.status === "Paid").length} Payments</span>
+           </div>
+           
+           <div className="p-0 overflow-x-auto">
+             <table className="w-full text-left">
+               <thead>
+                 <tr className="bg-white border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400 font-black">
+                   <th className="p-4">Transaction Details</th>
+                   <th className="p-4">Payment Method</th>
+                   <th className="p-4">Paid On</th>
+                   <th className="p-4">Amount</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-50">
+                 {bills.filter(b => b.status === "Paid").map(b => (
+                   <tr key={b._id} className="hover:bg-green-50/30 transition-colors">
+                     <td className="p-4">
+                       <p className="font-bold text-gray-800">{b.billName}</p>
+                       <p className="text-[10px] font-bold text-indigo-500 mt-0.5">{b.billType}</p>
+                     </td>
+                     <td className="p-4 font-semibold text-gray-600">
+                       {b.paymentMethod || "Online"}
+                     </td>
+                     <td className="p-4 text-gray-600 font-semibold">
+                       {new Date(b.paidAt).toLocaleDateString()}
+                     </td>
+                     <td className="p-4">
+                       <p className="text-lg font-black text-green-600">₹{b.amount.toLocaleString()}</p>
+                     </td>
+                   </tr>
+                 ))}
+                 {bills.filter(b => b.status === "Paid").length === 0 && (
+                   <tr>
+                     <td colSpan="4" className="p-10 text-center text-gray-400 font-bold">No payments made yet.</td>
+                   </tr>
+                 )}
+               </tbody>
+             </table>
+           </div>
+        </div>
+
+        {/* UPI QR PAYMENT MODAL */}
+        {showPaymentModal && selectedPaymentBill && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center animate-in zoom-in-95 relative mx-4">
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-3xl leading-none font-bold"
+              >
+                &times;
+              </button>
+              
+              <h3 className="text-2xl font-black text-gray-800 mb-1">Scan to Pay</h3>
+              <p className="text-sm text-gray-500 font-medium mb-6">UPI / QR Payment Gateway</p>
+              
+              <div className="bg-gray-50 p-4 rounded-2xl border-2 border-gray-100 mb-6 shadow-inner w-full flex justify-center">
+                 <img 
+                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=society@upi&pn=Society&am=${selectedPaymentBill.amount}`} 
+                   alt="QR Code" 
+                   className="w-48 h-48 object-contain mix-blend-multiply border-4 border-white shadow-sm rounded-xl" 
+                 />
+              </div>
+
+              <div className="w-full bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6">
+                 <p className="text-[10px] uppercase tracking-widest font-black text-indigo-400 mb-1">Paying For</p>
+                 <p className="font-bold text-gray-800 text-sm truncate">{selectedPaymentBill.billName}</p>
+                 <p className="text-3xl font-black text-indigo-600 mt-2">₹{selectedPaymentBill.amount.toLocaleString()}</p>
+              </div>
+
+              <button 
+                onClick={handleConfirmPayment}
+                disabled={processingPayment}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg shadow-green-600/30 transition-all uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {processingPayment ? <Loader className="animate-spin" size={20} /> : <CheckCircle size={20} />}
+                {processingPayment ? 'Processing...' : 'Confirm Paid'}
+              </button>
+            </div>
           </div>
         )}
 

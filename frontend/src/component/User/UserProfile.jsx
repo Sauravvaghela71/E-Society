@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Mail, Phone, MapPin, Calendar, Edit3, Camera, MessageSquare, Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Edit3, Camera, MessageSquare, Clock, CheckCircle, AlertCircle, Loader, Users } from 'lucide-react';
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -8,6 +8,8 @@ const UserProfile = () => {
   const [formData, setFormData] = useState({});
   const [complaints, setComplaints] = useState([]);
   const [complaintsLoading, setComplaintsLoading] = useState(true);
+  const [visitors, setVisitors] = useState([]);
+  const [visitorsLoading, setVisitorsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -17,6 +19,7 @@ const UserProfile = () => {
       setUser(storedUser);
       setFormData(storedUser);
       fetchComplaints(storedUser._id);
+      fetchVisitors(storedUser._id);
     }
   }, []);
 
@@ -29,6 +32,18 @@ const UserProfile = () => {
       console.error("Error fetching complaints:", err);
     } finally {
       setComplaintsLoading(false);
+    }
+  };
+
+  const fetchVisitors = async (userId) => {
+    try {
+      setVisitorsLoading(true);
+      const res = await axios.get(`http://localhost:5100/api/visitor/resident/${userId}`);
+      setVisitors(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching visitors:", err);
+    } finally {
+      setVisitorsLoading(false);
     }
   };
 
@@ -241,6 +256,56 @@ const UserProfile = () => {
           </div>
         )}
       </div>
+
+      {/* MY VISITORS SECTION */}
+      <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-slate-100 mt-6">
+        <div className="flex items-center gap-3 mb-6 border-b pb-4">
+          <Users size={22} className="text-emerald-600" />
+          <h2 className="text-xl font-bold text-slate-800">My Visitors</h2>
+          <span className="ml-auto text-sm font-bold bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">
+            {visitors.length} Total
+          </span>
+        </div>
+
+        {visitorsLoading ? (
+          <p className="text-center text-gray-400 py-6">Loading visitors...</p>
+        ) : visitors.length === 0 ? (
+          <div className="text-center py-10 text-slate-400">
+            <Users size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="font-semibold">No visitors recorded yet.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {visitors.map((visitor) => (
+              <div
+                key={visitor._id}
+                className="border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all bg-slate-50/50 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <p className="font-black text-slate-800 text-lg">{visitor.visitorName}</p>
+                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest ${visitor.status === 'inside' ? 'bg-orange-100 text-orange-600' : visitor.status === 'Exited' ? 'bg-slate-200 text-slate-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {visitor.status}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Phone size={14} className="text-emerald-500"/> {visitor.mobileNumber}
+                  </p>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                    <span className="font-bold">Purpose:</span> {visitor.purpose}
+                  </p>
+                </div>
+                
+                <div className="pt-3 border-t border-slate-200 flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  <span>Entry: {new Date(visitor.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span>{new Date(visitor.entryTime).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };
