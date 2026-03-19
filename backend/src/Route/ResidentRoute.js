@@ -8,7 +8,8 @@ const {
   getResidentById,
   updateResident,
   deleteResident,
-  searchResidents
+  searchResidents,
+  getResidentByEmail
 } = require("../Controller/ResidentController");
 
 
@@ -21,8 +22,10 @@ router.get("/", getResidents);
 
 
 /* ---------------- SEARCH RESIDENT ---------------- */
-
 router.get("/search", searchResidents);
+
+/* ---------------- GET BY EMAIL ---------------- */
+router.get("/by-email/:email", getResidentByEmail);
 
 
 /* ---------------- GET SINGLE RESIDENT ---------------- */

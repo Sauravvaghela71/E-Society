@@ -182,3 +182,17 @@ exports.searchResidents = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+/* ---------------- GET RESIDENT BY EMAIL ---------------- */
+exports.getResidentByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const resident = await Resident.findOne({ email: email.toLowerCase() });
+    if (!resident) {
+      return res.status(404).json({ message: "Resident not found" });
+    }
+    res.status(200).json(resident);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

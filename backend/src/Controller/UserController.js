@@ -118,24 +118,43 @@ const loginUser = async (req, res) => {
         if (foundUserFromEmail) {
             const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
 
-
             if (isPasswordMatched) {
+                const token = jwt.sign(foundUserFromEmail.toObject(), secret);
 
-           const token = jwt.sign(foundUserFromEmail.toObject(),secret)
-
+                // Attempt to load the linked resident/guard profile for richer data
+                let profileData = {};
+                if (foundUserFromEmail.profileid) {
+                    try {
+                        const Resident = require("../Model/ResidentModel");
+                        const resident = await Resident.findById(foundUserFromEmail.profileid);
+                        if (resident) {
+                            profileData = {
+                                firstName: resident.firstName || "",
+                                lastName: resident.lastName || "",
+                                blockWing: resident.wing || resident.blockWing || "",
+                                flatNumber: resident.flatNumber || "",
+                                mobileNumber: resident.mobileNumber || "",
+                                residentEmail: resident.email || "",
+                            };
+                        }
+                    } catch (e) {
+                        // Non-fatal: profile enrichment failed, continue with base data
+                        console.warn("Could not populate resident profile:", e.message);
+                    }
+                }
 
                 res.status(200).json({
                     message: "Login Success",
-                    token:token,
+                    token: token,
                     data: {
                         _id: foundUserFromEmail._id,
                         email: foundUserFromEmail.email,
                         role: foundUserFromEmail.role,
-                        // MongoDB fields mapping
-                        firstName: foundUserFromEmail.firstName, 
-                        lastName: foundUserFromEmail.lastName,
-                        flatNo: foundUserFromEmail.flatNo,
-                        profilePic: foundUserFromEmail.profilePic
+                        profileid: foundUserFromEmail.profileid, // ← critical for resident lookups
+                        Name: foundUserFromEmail.Name,
+                        profilePic: foundUserFromEmail.profilePic,
+                        // Resident profile fields merged in
+                        ...profileData,
                     }
                 });
             } else {
