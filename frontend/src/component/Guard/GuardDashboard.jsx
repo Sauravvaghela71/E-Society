@@ -184,17 +184,33 @@ function VisitorEntryTab({ residents, onNewVisitor }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+  const [newVisitorId, setNewVisitorId] = useState(null);
+  const [isAccepted, setIsAccepted] = useState(false);
 
   const purposes = ["Delivery", "Guest", "Service", "Cab", "Courier", "Other"];
 
+  useEffect(() => {
+    // Clean up
+  }, []);
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let updatedForm = { ...form, [name]: value };
+    
+    // Auto-fill Wing and Flat Number
+    if (name === "visitingResident" && value !== "") {
+      const selected = residents.find(r => r._id === value);
+      if (selected) {
+        updatedForm.blockWing = selected.wing || "";
+        updatedForm.flatNumber = selected.flatNumber || "";
+      }
+    }
+    setForm(updatedForm);
   };
 
   const triggerBell = () => {
     setShake(true);
     setTimeout(() => setShake(false), 800);
-    toast.info("🔔 Resident has been notified!", { position: "top-center" });
   };
 
   const handleSubmit = async (e) => {
@@ -213,13 +229,26 @@ function VisitorEntryTab({ residents, onNewVisitor }) {
         ...form,
         visitorKey: otp,
         visitingResident: form.visitingResident || undefined,
+        status: form.visitingResident ? "Pending" : "inside"
       };
+      
       const res = await axios.post("http://localhost:5100/api/visitor", payload);
       const newVisitor = res.data?.data || res.data;
       onNewVisitor(newVisitor);
-      setSubmitted(true);
-      triggerBell();
-      toast.success("Visitor logged and resident notified!");
+      setNewVisitorId(newVisitor._id);
+      
+      if (form.visitingResident) {
+         setSubmitted(true);
+         setIsAccepted(false);
+         triggerBell();
+         toast.info("OTP sent to resident. Please verify to register visitor.");
+      } else {
+         // No resident, auto accept
+         setIsAccepted(true);
+         setSubmitted(true);
+         toast.success("Visitor logged successfully!");
+      }
+
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to log visitor. Check required fields.");
       console.error(err);
@@ -228,37 +257,75 @@ function VisitorEntryTab({ residents, onNewVisitor }) {
     }
   };
 
+  const [otpInput, setOtpInput] = useState("");
+
+  const handleVerifyOTP = async () => {
+     if (otpInput === generatedOTP) {
+        try {
+           // Verify successful, update inside
+           await axios.get(`http://localhost:5100/api/visitor/accept/${newVisitorId}`);
+           setIsAccepted(true);
+           toast.success("OTP Verified! Visitor is registered securely.");
+        } catch (e) {
+           toast.error("Error confirming visitor. Please try again.");
+        }
+     } else {
+        toast.error("Incorrect OTP. Access Denied!");
+        setShake(true);
+        setTimeout(() => setShake(false), 800);
+     }
+  };
+
   const handleReset = () => {
     setForm({ visitorName: "", mobileNumber: "", blockWing: "", flatNumber: "", purpose: "Delivery", visitingResident: "" });
     setGeneratedOTP("");
+    setNewVisitorId(null);
+    setIsAccepted(false);
     setSubmitted(false);
+    setOtpInput("");
   };
 
-  if (submitted && generatedOTP) {
+  if (submitted) {
     return (
       <div className="max-w-lg mx-auto">
         <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-8 text-center space-y-6">
-          {/* Bell animation */}
-          <div
-            className={`w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto text-green-500 text-4xl transition-transform ${shake ? "animate-bounce" : ""}`}
-          >
-            🔔
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-gray-800">Visitor Logged!</h2>
-            <p className="text-gray-500 mt-1">Resident has been notified</p>
-          </div>
+          {isAccepted ? (
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg transform transition-all">
+              <p className="text-green-100 text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                <CheckCircle size={14} /> Access Granted
+              </p>
+              <p className="text-3xl font-black tracking-wider my-2">VISITOR REGISTERED</p>
+              <p className="text-green-100 text-xs mt-3">Guard has completed the entry.</p>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-slate-100 to-gray-50 rounded-2xl p-6 border border-gray-200 shadow-inner">
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                <Key size={14} /> Verification Required
+              </p>
+              <p className="text-sm font-bold text-gray-700 mb-3">An OTP has been sent to the Resident.</p>
+              <p className="text-xs text-gray-500 mb-6 px-4">Ask the visitor to call the resident, or contact the resident directly to acquire the 6-digit entry code.</p>
+              
+              <div className={`transition-transform flex flex-col items-center gap-4 ${shake ? "animate-bounce" : ""}`}>
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  placeholder="------"
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="w-48 text-center tracking-[0.5em] text-3xl font-black py-3 rounded-xl border-2 border-slate-300 focus:border-blue-500 outline-none text-slate-800"
+                />
+                <button 
+                  onClick={handleVerifyOTP}
+                  disabled={otpInput.length !== 6}
+                  className="w-48 py-3 bg-blue-600 font-bold text-white rounded-xl shadow-md disabled:bg-slate-300 hover:bg-blue-700 transition"
+                >
+                  Verify OTP
+                </button>
+              </div>
+            </div>
+          )}
 
-          {/* OTP Key Card */}
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white">
-            <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
-              <Key size={12} /> Visitor Entry Key
-            </p>
-            <p className="text-5xl font-black tracking-[0.3em]">{generatedOTP}</p>
-            <p className="text-blue-200 text-xs mt-3">Share this key with the visitor</p>
-          </div>
-
-          <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-1 text-sm">
+          <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-1 text-sm border border-gray-100">
             <p><span className="font-bold text-gray-500">Visitor:</span> <span className="font-semibold text-gray-800">{form.visitorName}</span></p>
             <p><span className="font-bold text-gray-500">Mobile:</span> <span className="font-semibold text-gray-800">{form.mobileNumber}</span></p>
             <p><span className="font-bold text-gray-500">Flat:</span> <span className="font-semibold text-gray-800">{form.blockWing} – {form.flatNumber}</span></p>
@@ -266,15 +333,17 @@ function VisitorEntryTab({ residents, onNewVisitor }) {
           </div>
 
           <div className="flex gap-3">
-            <button
-              onClick={triggerBell}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 text-yellow-900 font-bold rounded-2xl hover:bg-yellow-500 transition-colors ${shake ? "scale-95" : ""}`}
-            >
-              <Bell size={18} className={shake ? "animate-bounce" : ""} /> Ring Bell
-            </button>
+             {(!isAccepted) && (
+               <button
+                 onClick={triggerBell}
+                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-yellow-400 text-yellow-900 font-bold rounded-2xl hover:bg-yellow-500 transition-colors"
+               >
+                 <Bell size={18} /> Resend Alert
+               </button>
+             )}
             <button
               onClick={handleReset}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-800 text-white font-bold rounded-2xl hover:bg-gray-900 transition-colors"
             >
               <RefreshCw size={18} /> New Entry
             </button>

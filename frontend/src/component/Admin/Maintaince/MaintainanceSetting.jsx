@@ -66,7 +66,7 @@ export default function MaintainanceSetting() {
           amount: settings.maintenanceAmount,
           dueDate: nextMonth,
           status: "Pending",
-          details: `Standard Monthly Charge: ₹${settings.maintenanceAmount}`
+          details: `Water: ₹${Math.round(settings.maintenanceAmount * 0.3)}, Parking: ₹${Math.round(settings.maintenanceAmount * 0.2)}, Maintenance: ₹${Math.round(settings.maintenanceAmount * 0.5)}`
        }));
        await Promise.all(promises);
        alert("Auto-Generated Monthly Bills successfully for ALL residents!");
@@ -100,6 +100,9 @@ export default function MaintainanceSetting() {
 
   if (loading) return <div className="p-8"><Loader className="animate-spin text-blue-500" /></div>;
 
+  const totalPendingAmount = bills.filter(b => b.status === "Pending").reduce((sum, b) => sum + b.amount, 0);
+  const totalPaidAmount = bills.filter(b => b.status === "Paid").reduce((sum, b) => sum + b.amount, 0);
+
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-screen text-gray-800 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -132,6 +135,19 @@ export default function MaintainanceSetting() {
             )}
           </div>
         </div>
+
+        {/* SUMMARY WIDGETS */}
+        <div className="grid grid-cols-2 gap-4">
+           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 shadow-sm">
+             <p className="text-xs font-black uppercase tracking-widest text-orange-400 mb-1">Total Pending Payable Amount</p>
+             <p className="text-3xl font-black text-orange-600">₹{totalPendingAmount.toLocaleString()}</p>
+           </div>
+           <div className="bg-green-50 border border-green-100 rounded-2xl p-6 shadow-sm">
+             <p className="text-xs font-black uppercase tracking-widest text-green-400 mb-1">Total Paid Amount</p>
+             <p className="text-3xl font-black text-green-600">₹{totalPaidAmount.toLocaleString()}</p>
+           </div>
+        </div>
+
 
         {/* Global Settings Viewer & Form */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 lg:items-center">

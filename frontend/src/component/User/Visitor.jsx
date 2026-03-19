@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Loader, ShieldCheck, Clock, UserCheck, Search, Filter } from "lucide-react";
 
 export default function UserVisitor() {
@@ -7,7 +8,6 @@ export default function UserVisitor() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-
   const getCurrentUser = () => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -53,7 +53,7 @@ export default function UserVisitor() {
         setLoading(false);
       }
     };
-
+    
     fetchVisitors();
   }, []);
 
@@ -140,7 +140,14 @@ export default function UserVisitor() {
                 <div className="flex-1 space-y-1">
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-gray-900 text-lg leading-tight">{v.visitorName || 'Unknown'}</h3>
-                    {getStatusBadge(v.status)}
+                    <div className="flex flex-col items-end gap-2">
+                       {getStatusBadge(v.status)}
+                       {v.status === 'Pending' && v.visitorKey && (
+                         <div className="text-[10px] font-black uppercase bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg border border-gray-200 mt-1">
+                            OTP: <span className="text-blue-600 tracking-widest ml-1">{v.visitorKey}</span>
+                         </div>
+                       )}
+                    </div>
                   </div>
                   
                   <p className="text-sm font-semibold text-gray-500 flex items-center gap-1.5">
