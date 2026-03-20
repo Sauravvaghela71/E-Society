@@ -1,25 +1,48 @@
-import { Navigate } from "react-router-dom"
+import { Navigate } from "react-router-dom";
 
-// Maps raw API role values to the canonical role used in the router's userRoles arrays
+// Normalize roles
 const normalizeRole = (role) => {
     if (!role) return null;
     const r = role.toLowerCase();
-    if (r === "resident") return "user";       // API sends "resident", router uses "user"
-    if (r === "security") return "guard";      // API sends "security", router uses "guard"
+    if (r === "resident") return "user";
+    if (r === "security") return "guard";
     return r;
 };
 
+// ✅ Decode JWT
+const isTokenExpired = (token) => {
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return Date.now() > payload.exp * 1000;
+    } catch (err) {
+        return true;
+    }
+};
+
 const ProtectedRoute = ({ children, userRoles }) => {
-    const token = localStorage.getItem("token");
-    const rawRole = localStorage.getItem("role");
+
+    // ✅ USE sessionStorage
+    const token = sessionStorage.getItem("token");
+    const rawRole = sessionStorage.getItem("role");
     const role = normalizeRole(rawRole);
 
+    // ❌ No token → redirect
     if (!token) {
         return <Navigate to="/" replace />;
     }
+
+    // ❌ Token expired → logout + redirect
+    if (isTokenExpired(token)) {
+        sessionStorage.clear();
+        return <Navigate to="/" replace />;
+    }
+
+    // ❌ Role not allowed
     if (!userRoles || !userRoles.includes(role)) {
         return <Navigate to="/" replace />;
     }
+
+    // ✅ Allow access
     return children;
 };
 

@@ -7,46 +7,48 @@ import { toast } from "react-toastify";
 export default function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  // useForm hooks
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const submitHandler = async (formData) => {
+  // ✅ React Hook Form me "data" parameter milta hai, "e" (event) nahi
+  const submitHandler = async (data) => {
+    // e.preventDefault(); <-- Iski zaroorat nahi hai, handleSubmit handle kar lega
+
     setIsLoading(true);
+    const token = sessionStorage.getItem("token");
     try {
-      const res = await axios.post("http://localhost:5100/api/user/login", formData);
-
-      if (res.status === 200) {
-        const userData = res.data.data;
-        const userRole = (userData.role || "user").toLowerCase();
-
-        // Persist session to localStorage BEFORE navigating
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("role", userRole);
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        toast.success("Login Successful! Redirecting...");
-
-        // Navigate with full reload so all components re-read fresh localStorage
-        if (userRole === "admin") {
-          window.location.href = "/admin/dashboard";
-        } else if (userRole === "resident" || userRole === "user") {
-          // Both 'resident' and legacy 'user' roles go to user dashboard
-          window.location.href = "/user";
-        } else if (userRole === "security" || userRole === "guard") {
-          window.location.href = "/security/dashboard";
-        } else {
-          // Unknown role — still try user dashboard
-          window.location.href = "/user";
+      const res = await axios.post(
+        "http://localhost:5100/api/user/login",
+        data, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+
+      });
+
+      const user = res.data.data;
+      const role = user.role.toLowerCase();
+
+      // ✅ STORE IN SESSION STORAGE
+      sessionStorage.setItem("token", res.data.token);
+      sessionStorage.setItem("role", role);
+      sessionStorage.setItem("user", JSON.stringify(user));
+
+      toast.success("Login Successful!"); // Alert ki jagah toast use karein
+
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/user");
       }
     } catch (err) {
-      console.error("Login Error:", err.response?.data);
-      toast.error(err.response?.data?.message || "Invalid Email or Password");
+      console.error(err);
+      toast.error(err.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -58,23 +60,30 @@ export default function Login() {
           <h2 className="text-3xl font-black mb-2 text-gray-800">Welcome Back 👋</h2>
           <p className="text-gray-500 mb-8 font-medium">Please login to access e-Society</p>
 
+          {/* ✅ form onSubmit me handleSubmit pass karein */}
           <form onSubmit={handleSubmit(submitHandler)} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
-              <input type="email" placeholder="Enter your email" 
-                className={`w-full p-3 border rounded-xl outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} 
-                {...register("email", { required: "Email is required" })} 
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`}
+                {...register("email", { required: "Email is required" })}
               />
               {errors.email && <p className="text-red-500 text-xs mt-1 font-bold">{errors.email.message}</p>}
             </div>
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
-              <input type="password" placeholder="Enter your password" 
-                className={`w-full p-3 border rounded-xl outline-none transition ${errors.password ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`} 
-                {...register("password", { required: "Password is required" })} 
+              <input
+                type="password"
+                placeholder="Enter your password"
+                className={`w-full p-3 border rounded-xl outline-none transition ${errors.password ? 'border-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-400 border-gray-200'}`}
+                {...register("password", { required: "Password is required" })}
               />
               {errors.password && <p className="text-red-500 text-xs mt-1 font-bold">{errors.password.message}</p>}
             </div>
+
             <button
               type="submit"
               disabled={isLoading}
