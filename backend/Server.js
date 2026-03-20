@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
+const verifyToken = require("./src/Middleware/authMiddlewate")
 const Database = require("./Database/DB");
 
 /* ROUTES */

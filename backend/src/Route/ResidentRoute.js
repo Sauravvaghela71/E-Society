@@ -14,7 +14,7 @@ const {
 
 
 /* ---------------- CREATE RESIDENT ---------------- */
-router.post("/",upload.single("idProof"), createResident);
+router.post("/", upload.single("idProof"), createResident);
 
 
 /* ---------------- GET ALL RESIDENTS ---------------- */

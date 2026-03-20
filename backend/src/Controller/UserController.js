@@ -87,87 +87,76 @@
 
 const userSchema = require("../Model/UserModel");
 const bcrypt = require("bcrypt");
-const mailSend = require("../Util/MailSend");
-const jwt = require("jsonwebtoken")
-const secret = "secret"
+const jwt = require("jsonwebtoken");
 
+const SECRET = "secret"; // move to .env in production
+
+// ✅ REGISTER
 const registerUser = async (req, res) => {
-    try {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        const savedUser = await userSchema.create({ ...req.body, password: hashedPassword });
-        
-        mailSend(savedUser.email, "Welcome to our app", "Thank you for registering with our app.");
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-        res.status(201).json({
-            message: "user created successfully",
-            data: savedUser
-        });
-    } catch (err) {
-        res.status(500).json({
-            message: "error while creating user",
-            err: err.message
-        });
-    }
-}
+    const user = await userSchema.create({
+      ...req.body,
+      password: hashedPassword,
+    });
 
+    res.status(201).json({
+      message: "User created successfully",
+      data: user,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error while creating user",
+      error: err.message,
+    });
+  }
+};
+
+// ✅ LOGIN
 const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const foundUserFromEmail = await userSchema.findOne({ email: email });
+  try {
+    const { email, password } = req.body;
 
-        if (foundUserFromEmail) {
-            const isPasswordMatched = await bcrypt.compare(password, foundUserFromEmail.password);
-
-            if (isPasswordMatched) {
-                const token = jwt.sign(foundUserFromEmail.toObject(), secret);
-
-                // Attempt to load the linked resident/guard profile for richer data
-                let profileData = {};
-                if (foundUserFromEmail.profileid) {
-                    try {
-                        const Resident = require("../Model/ResidentModel");
-                        const resident = await Resident.findById(foundUserFromEmail.profileid);
-                        if (resident) {
-                            profileData = {
-                                firstName: resident.firstName || "",
-                                lastName: resident.lastName || "",
-                                blockWing: resident.wing || resident.blockWing || "",
-                                flatNumber: resident.flatNumber || "",
-                                mobileNumber: resident.mobileNumber || "",
-                                residentEmail: resident.email || "",
-                            };
-                        }
-                    } catch (e) {
-                        // Non-fatal: profile enrichment failed, continue with base data
-                        console.warn("Could not populate resident profile:", e.message);
-                    }
-                }
-
-                res.status(200).json({
-                    message: "Login Success",
-                    token: token,
-                    data: {
-                        _id: foundUserFromEmail._id,
-                        email: foundUserFromEmail.email,
-                        role: foundUserFromEmail.role,
-                        profileid: foundUserFromEmail.profileid, // ← critical for resident lookups
-                        Name: foundUserFromEmail.Name,
-                        profilePic: foundUserFromEmail.profilePic,
-                        // Resident profile fields merged in
-                        ...profileData,
-                    }
-                });
-            } else {
-                res.status(401).json({ message: "Invalid Credentials" });
-            }
-        } else {
-            res.status(404).json({ message: "User not found." });
-        }
-    } catch (err) {
-        res.status(500).json({ message: "Error while logging in", err: err.message });
+    const user = await userSchema.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-}
 
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // ✅ SAFE TOKEN (only id + role)
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      SECRET,
+      { expiresIn: "1s" } // ✅ token expires in 1 hour
+    );
+
+    res.status(200).json({
+      message: "Login Success",
+      token,
+      data: {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Login error",
+      error: err.message,
+    });
+  }
+};
+
+module.exports = { registerUser, loginUser };
 // UserController.js
 const getUserById = async (req, res) => {
   try {
