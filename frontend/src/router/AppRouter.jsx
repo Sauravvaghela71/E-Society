@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import React from "react";
+import ProtectedRoute from "../component/ProtectRoute";
 
 import Login from "../component/User/Login";
 import Resident from "../component/Admin/Resident";
@@ -28,17 +29,7 @@ import UserMaintenance from "../component/User/Maintenance";
 import FlatDetails from "../component/Admin/FlatDetails";
 import GuardLayout from "../component/Guard/GuardLayout";
 import GuardDashboard from "../component/Guard/GuardDashboard";
-import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true";
-  
-  if (!isAuthenticated) {
-    // If not authenticated, send user to login page
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
 
 const router = createBrowserRouter([
   
@@ -53,7 +44,7 @@ const router = createBrowserRouter([
   // admin dashboard routes
   {
     path: "/admin",
-    element: <ProtectedRoute><AdminLayout /></ProtectedRoute>,
+    element: <ProtectedRoute userRoles={["admin"]}><AdminLayout /></ProtectedRoute>,
     children: [
        
       {
@@ -129,7 +120,7 @@ const router = createBrowserRouter([
   {
     path: "/user",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute userRoles={["user"]}>
         <UserLayout />
       </ProtectedRoute>
     ),
@@ -169,7 +160,7 @@ const router = createBrowserRouter([
   {
     path: "/security",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute userRoles={["guard"]}>
         <GuardLayout />
       </ProtectedRoute>
     ),
@@ -181,7 +172,7 @@ const router = createBrowserRouter([
   {
     path: "/guard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute userRoles={["guard"]}>
         <GuardLayout />
       </ProtectedRoute>
     ),
@@ -197,4 +188,4 @@ const AppRouter = () => {
   return <RouterProvider router={router} />;
 };
 
-export default AppRouter;
+export default AppRouter;
