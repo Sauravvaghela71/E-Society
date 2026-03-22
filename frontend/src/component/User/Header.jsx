@@ -163,7 +163,7 @@ const Header = () => {
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/login")} className="px-5 py-2 font-bold text-sm text-gray-700">Login</button>
+            <button onClick={() => navigate("/login")} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-pink-600 text-white shadow-lg flex items-center gap-2">Login</button>
             <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg flex items-center gap-2">Join <FaArrowRight size={10} /></button>
           </div>
         )}
@@ -201,4 +201,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header;
