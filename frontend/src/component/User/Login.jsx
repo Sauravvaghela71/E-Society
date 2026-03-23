@@ -28,17 +28,27 @@ export default function Login() {
         const token = res.data.token;
         const role = user.role.toLowerCase();
 
-        // ✅ SAVE TO SESSION STORAGE
+        // ✅ SAVE TO SESSION STORAGE (for current session)
         sessionStorage.setItem("token", token);
         sessionStorage.setItem("role", role);
         sessionStorage.setItem("user", JSON.stringify(user));
+
+        // ✅ SAVE TO LOCAL STORAGE (for persistent login state)
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify(user));
 
         toast.success("Login Successful!");
 
         // ✅ REDIRECT BASED ON ROLE
         if (role === "admin") {
+          console.log(role);
           navigate("/admin/dashboard");
-        } else {
+        }else if ( role === "guard") {
+          console.log(role);
+          navigate("/security/dashboard");
+        } 
+        else {
+          console.log(role);
           navigate("/user/dashboard");
         }
       }
@@ -144,7 +154,7 @@ export default function Login() {
         <Link
           to="/forgotpassword"
           className="inline-block px-4 py-2 text-sm font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all">
-          
+          Forgot Password?  
         </Link>
        </div>
 

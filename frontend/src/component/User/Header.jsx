@@ -9,18 +9,11 @@ import {
 
 const Header = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState({});
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+  const [user] = useState(() => JSON.parse(localStorage.getItem("user") || "{}"));
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const status = localStorage.getItem("isLoggedIn") === "true";
-    const data = JSON.parse(localStorage.getItem("user") || "{}");
-    setIsLoggedIn(status);
-    setUser(data);
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -164,7 +157,6 @@ const Header = () => {
         ) : (
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/login")} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-pink-600 text-white shadow-lg flex items-center gap-2">Login</button>
-            <button className="px-6 py-2.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg flex items-center gap-2">Join <FaArrowRight size={10} /></button>
           </div>
         )}
       </nav>

@@ -53,14 +53,14 @@ export default function UserDashboard() {
             const emailRes = await axios.get(`http://localhost:5100/api/residents/by-email/${encodeURIComponent(userEmail)}`);
             if (emailRes.data) residentData = emailRes.data;
           }
-        } catch (_) { /* not found by email */ }
+        } catch { /* not found by email */ }
 
         if (!residentData && profileId) {
           // Fallback: look up by profileid/userId
           try {
             const idRes = await axios.get(`http://localhost:5100/api/residents/${profileId}`);
             if (idRes.data) residentData = idRes.data;
-          } catch (_) { }
+          } catch { /* not found by ID */ }
         }
 
         // Merge resident data into activeUser immediately
