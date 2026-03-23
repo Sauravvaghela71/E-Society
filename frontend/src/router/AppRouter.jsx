@@ -33,12 +33,17 @@ import UserMaintenance from "../component/User/Maintenance";
 // Guard
 import GuardLayout from "../component/Guard/GuardLayout";
 import GuardDashboard from "../component/Guard/GuardDashboard";
+import { ForgotPassword } from "../component/ForgotPassword";
+import { ResetPassword } from "../component/ResetPassword";
 
 const router = createBrowserRouter([
 
   // ✅ Public Routes
   { path: "/login", element: <Login /> },
   { path: "/", element: <HomePage /> },
+  { path: "/forgotpassword", element: <ForgotPassword /> },
+  { path: "/resetpassword/:token", element: <ResetPassword/> },
+
 
   // ✅ Admin Routes
   {

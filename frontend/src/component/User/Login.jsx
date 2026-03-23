@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export default function Login() {
@@ -15,6 +15,9 @@ export default function Login() {
     setIsLoading(true); // Start loader
 
     try {
+      // 🔍 DEBUG: Log the form data being sent
+      console.log("📤 Sending login request with data:", data);
+      
       // ✅ FIX: Do NOT send Authorization headers for a login request. 
       // The server doesn't know who you are yet!
       const res = await axios.post("http://localhost:5100/api/user/login", data);
@@ -40,9 +43,29 @@ export default function Login() {
         }
       }
     } catch (err) {
-      console.error("Login Error:", err);
+      console.error("❌ Login Error:", err);
+      
+      // 🔍 DEBUG: Log detailed error info
+      if (err.response) {
+        console.error("Backend response status:", err.response.status);
+        console.error("Backend response data:", err.response.data);
+        console.error("Backend response headers:", err.response.headers);
+      } else if (err.request) {
+        console.error("No response received - request failed:", err.request);
+      } else {
+        console.error("Error message:", err.message);
+      }
+      
       // ✅ Handle specific error messages from your backend
-      const errorMsg = err.response?.data?.message || "Invalid credentials. Please try again.";
+      let errorMsg = "Invalid credentials. Please try again.";
+      
+      if (err.response?.status === 500) {
+        console.error("⚠️ Server Error: The backend encountered an error. Check backend logs for details.");
+        errorMsg = err.response?.data?.message || "Server error. Please contact support.";
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      
       toast.error(errorMsg);
     } finally {
       // ✅ Always stop loading in finally to handle both success and error cases
@@ -115,6 +138,16 @@ export default function Login() {
               ) : "Login Now"}
             </button>
           </form>
+
+        <div className="mt-4 text-center">
+
+        <Link
+          to="/forgotpassword"
+          className="inline-block px-4 py-2 text-sm font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all">
+          
+        </Link>
+       </div>
+
         </div>
       </div>
     </div>
