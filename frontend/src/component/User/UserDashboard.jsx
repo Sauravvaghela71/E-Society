@@ -8,7 +8,7 @@ import {
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(false);
 
   // Real-time data states
   const [notices, setNotices] = useState([]);
@@ -21,11 +21,14 @@ export default function UserDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
+    console.log("here")
+    const userStr = sessionStorage.getItem("user");
     if (userStr) {
       try {
         setCurrentUser(JSON.parse(userStr));
       } catch (e) {
+        console.log(e)
+        setLoading(false)
         console.error("Failed to parse user");
       }
     }
@@ -38,7 +41,7 @@ export default function UserDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const profileId = currentUser.profileid || currentUser._id;
         const userEmail = currentUser.email;
 
@@ -57,7 +60,7 @@ export default function UserDashboard() {
           try {
             const idRes = await axios.get(`http://localhost:5100/api/residents/${profileId}`);
             if (idRes.data) residentData = idRes.data;
-          } catch (_) {}
+          } catch (_) { }
         }
 
         // Merge resident data into activeUser immediately
@@ -72,8 +75,8 @@ export default function UserDashboard() {
             residentMongoId: residentData._id, // store resident's actual _id for visitor lookups
           };
           setCurrentUser(activeUser);
-          // Persist updated data to localStorage so next time it works offline
-          localStorage.setItem("user", JSON.stringify({ ...JSON.parse(localStorage.getItem("user") || "{}"), ...activeUser }));
+          // Persist updated data to sessionStorage so next time it works offline
+          sessionStorage.setItem("user", JSON.stringify({ ...JSON.parse(sessionStorage.getItem("user") || "{}"), ...activeUser }));
         }
         setHasFetched(true);
 
@@ -110,12 +113,13 @@ export default function UserDashboard() {
 
         // Process Complaints (Filter by user)
         if (complaintRes.status === "fulfilled") {
-           const allComplaints = Array.isArray(complaintRes.value.data) ? complaintRes.value.data : complaintRes.value.data?.data || [];
-           setMyComplaints(allComplaints.filter(c => c.complainer?._id === resolvedProfileId || c.complainer === resolvedProfileId).slice(0, 3));
+          const allComplaints = Array.isArray(complaintRes.value.data) ? complaintRes.value.data : complaintRes.value.data?.data || [];
+          setMyComplaints(allComplaints.filter(c => c.complainer?._id === resolvedProfileId || c.complainer === resolvedProfileId).slice(0, 3));
         }
-
+        setLoading(false)
       } catch (err) {
         console.error("Dashboard fetch error:", err);
+        setLoading(false)
       } finally {
         setLoading(false);
       }
@@ -125,21 +129,21 @@ export default function UserDashboard() {
   }, [currentUser, hasFetched]);
 
 
-  if (loading || !currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Activity size={40} className="text-blue-500 animate-spin" />
-      </div>
-    );
-  }
+  // if (loading || !currentUser) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <Activity size={40} className="text-blue-500 animate-spin" />
+  //     </div>
+  //   );
+  // }
 
   // Generate Quick Links dynamically
   const features = [
-    { title: "My Profile", icon: <User size={24}/>, path: "/user/profile", color: "text-blue-600 bg-blue-50", count: null },
-    { title: "Amenities", icon: <Calendar size={24}/>, path: "/user/facilities", color: "text-green-600 bg-green-50", count: myBookings.length },
-    { title: "My Complaints", icon: <MessageCircle size={24}/>, path: "/user/complaint", color: "text-orange-600 bg-orange-50", count: myComplaints.length },
-    { title: "Visitor Logs", icon: <ShieldCheck size={24}/>, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length },
-    { title: "Maintenance Bills", icon: <Wallet size={24}/>, path: "/user/maintenance", color: "text-emerald-600 bg-emerald-50", count: null }
+    { title: "My Profile", icon: <User size={24} />, path: "/user/profile", color: "text-blue-600 bg-blue-50", count: null },
+    { title: "Amenities", icon: <Calendar size={24} />, path: "/user/facilities", color: "text-green-600 bg-green-50", count: myBookings.length },
+    { title: "My Complaints", icon: <MessageCircle size={24} />, path: "/user/complaint", color: "text-orange-600 bg-orange-50", count: myComplaints.length },
+    { title: "Visitor Logs", icon: <ShieldCheck size={24} />, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length },
+    { title: "Maintenance Bills", icon: <Wallet size={24} />, path: "/user/maintenance", color: "text-emerald-600 bg-emerald-50", count: null }
   ];
 
   return (
@@ -151,10 +155,10 @@ export default function UserDashboard() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
           <div className="relative z-10">
             <h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tight line-clamp-1">
-              Hello, {currentUser.firstName} {currentUser.lastName}! 👋
+              Hello, {currentUser?.firstName} {currentUser?.lastName}! 👋
             </h1>
             <p className="text-blue-100 text-lg md:text-xl font-medium max-w-2xl">
-              Welcome to your real-time E-Society hub for Wing {currentUser.blockWing || "N/A"}, Flat {currentUser.flatNumber || "N/A"}.
+              Welcome to your real-time E-Society hub for Wing {currentUser?.blockWing || "N/A"}, Flat {currentUser?.flatNumber || "N/A"}.
             </p>
           </div>
         </div>
@@ -184,7 +188,7 @@ export default function UserDashboard() {
 
         {/* Live Data Sections Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
-          
+
           {/* Active Notices Feed */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
             <div className="flex items-center justify-between mb-6 pb-4 border-b">
@@ -206,8 +210,8 @@ export default function UserDashboard() {
               ))}
             </div>
             {notices.length > 1 && (
-              <button 
-                onClick={() => setShowAllNotices(!showAllNotices)} 
+              <button
+                onClick={() => setShowAllNotices(!showAllNotices)}
                 className="mt-4 w-full text-center text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors p-2 bg-blue-50 rounded-lg">
                 {showAllNotices ? "Show Less" : "View All Notices"}
               </button>
@@ -259,7 +263,7 @@ export default function UserDashboard() {
                   <div className="ml-2">
                     <p className="font-bold text-gray-800 text-sm">{b.facility?.name}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock size={12} className="text-gray-400"/>
+                      <Clock size={12} className="text-gray-400" />
                       <span className="text-xs text-gray-500 font-medium">{b.timeSlot}</span>
                     </div>
                     <div className="mt-2 flex justify-between items-center">

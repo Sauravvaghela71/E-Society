@@ -14,16 +14,19 @@ const UserProfile = () => {
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [showAllNotices, setShowAllNotices] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const storedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
     if (storedUser && storedUser._id) {
       setUser(storedUser);
       setFormData(storedUser);
       fetchComplaints(storedUser._id);
       fetchVisitors(storedUser._id);
       fetchNotices();
+    } else {
+      setError("User data not found. Please login again.");
     }
   }, []);
 
@@ -67,7 +70,7 @@ const UserProfile = () => {
   const handleUpdate = async () => {
     try {
       const res = await axios.put(`http://localhost:5100/api/user/${user._id}`, formData);
-      localStorage.setItem("user", JSON.stringify(res.data));
+      sessionStorage.setItem("user", JSON.stringify(res.data));
       setUser(res.data);
       setIsEditing(false);
       alert("Profile Updated!");
@@ -102,9 +105,9 @@ const UserProfile = () => {
       const updatedUser = { ...user, profilePic: newPicUrl };
       setUser(updatedUser);
 
-      // Sync localStorage so Header avatar also updates
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...storedUser, profilePic: newPicUrl }));
+      // Sync sessionStorage so Header avatar also updates
+      const storedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
+      sessionStorage.setItem("user", JSON.stringify({ ...storedUser, profilePic: newPicUrl }));
 
       alert("Profile photo updated successfully!");
     } catch (err) {
@@ -141,6 +144,7 @@ const UserProfile = () => {
     }
   };
 
+  if (error) return <div className="p-10 text-center font-bold text-red-500">{error}</div>;
   if (!user) return <div className="p-10 text-center font-bold text-gray-500">Loading Profile...</div>;
 
   return (
@@ -238,7 +242,7 @@ const UserProfile = () => {
                 
                 <div className="pt-3 border-t border-slate-200 flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                   <span>Posted Date</span>
-                  <span>{new Date(notice.noticeDate).toLocaleDateString()}</span>
+                  <span>{notice.noticeDate ? new Date(notice.noticeDate).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
             ))}
@@ -351,12 +355,12 @@ const UserProfile = () => {
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <p className="font-black text-slate-800 text-lg">{visitor.visitorName}</p>
-                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest ${visitor.status === 'inside' ? 'bg-orange-100 text-orange-600' : visitor.status === 'Exited' ? 'bg-slate-200 text-slate-600' : 'bg-blue-100 text-blue-600'}`}>
-                      {visitor.status}
+                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest ${visitor.status?.toLowerCase() === 'inside' ? 'bg-orange-100 text-orange-600' : visitor.status?.toLowerCase() === 'exited' ? 'bg-slate-200 text-slate-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {visitor.status || 'Unknown'}
                     </span>
                   </div>
                   <p className="text-slate-500 text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Phone size={14} className="text-emerald-500"/> {visitor.mobileNumber}
+                    <Phone size={14} className="text-emerald-500"/> {visitor.mobileNumber || 'N/A'}
                   </p>
                   <p className="text-slate-600 text-sm leading-relaxed mb-4">
                     <span className="font-bold">Purpose:</span> {visitor.purpose}
@@ -364,8 +368,8 @@ const UserProfile = () => {
                 </div>
                 
                 <div className="pt-3 border-t border-slate-200 flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                  <span>Entry: {new Date(visitor.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                  <span>{new Date(visitor.entryTime).toLocaleDateString()}</span>
+                  <span>Entry: {visitor.entryTime ? new Date(visitor.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A'}</span>
+                  <span>{visitor.entryTime ? new Date(visitor.entryTime).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
             ))}
@@ -377,4 +381,4 @@ const UserProfile = () => {
   );
 };
 
-export default UserProfile;
+export default UserProfile;

@@ -74,7 +74,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <UserDashboard /> },
+      { path: "dashboard", element: <UserDashboard /> },
       { path: "profile", element: <UserProfile /> },
       { path: "complaint", element: <UserComplaint /> },
       { path: "visitor", element: <UserVisitor /> },
