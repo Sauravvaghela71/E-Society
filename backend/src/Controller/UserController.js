@@ -88,7 +88,8 @@
 const userSchema = require("../Model/UserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const secret = "secret"
+const mailSend = require("../Util/MailSend");
 const SECRET = "secret"; // move to .env in production
 
 // ✅ REGISTER
@@ -207,9 +208,69 @@ const uploadProfilePic = async (req, res) => {
   }
 };
 
+const forgotPassword =async(req,res)=>{
+
+
+    const {email} = req.body;
+    if(!email) return res.status(400).json({
+        messsage:"email is not provided."
+    })
+
+    const foundUserFromEmail = await userSchema.findOne({email:email})
+    if(foundUserFromEmail){
+        //token generate..
+        const token = jwt.sign(foundUserFromEmail.toObject(),secret,{expiresIn:60*24*7})
+        //reset link..
+        const url = `http://localhost:5173/resetpassword/${token}`
+        //send mail
+        const mailtext = `<html>
+            <a href ='${url}'>RESET PASSWORD</a>
+        </html>`
+        await mailSend(foundUserFromEmail.email,"Reset Password Link",mailtext)
+        res.status(200).json({
+            message:"reset link has been sent to your email"
+        })
+        
+
+    }
+    else{
+        res.status(404).json({
+            message:"user not found.."
+        })
+    }
+
+
+
+}
+
+const resetPassword = async(req,res)=>{
+
+    const {newPassword,token} = req.body;
+    try{
+
+        const decodedUser = await jwt.verify(token,secret) //{userobject}
+        const hashedPassword =await  bcrypt.hash(newPassword,10)
+        const updatedUser = await userSchema.findByIdAndUpdate(decodedUser._id,{password:hashedPassword})
+        res.status(200).json({
+            message:"password reset successfully !!",
+        })
+
+
+    }catch(err){
+        console.log(err)
+        res.status(500).json({
+            message:"server error..",
+            err:err
+        })
+    }
+
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getUserById,
     uploadProfilePic,
+    forgotPassword,
+    resetPassword
 }
