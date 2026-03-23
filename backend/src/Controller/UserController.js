@@ -136,7 +136,7 @@ const loginUser = async (req, res) => {
         role: user.role,
       },
       SECRET,
-      { expiresIn: "1s" } // ✅ token expires in 1 hour
+      { expiresIn: "24h" } // ✅ token expires in 24 hours
     );
 
     res.status(200).json({
@@ -146,7 +146,7 @@ const loginUser = async (req, res) => {
         _id: user._id,
         email: user.email,
         role: user.role,
-        name: user.name,
+        name: user.Name,
       },
     });
   } catch (err) {

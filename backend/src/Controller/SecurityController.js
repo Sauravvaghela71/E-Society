@@ -1,7 +1,9 @@
 const Security = require("../Model/SecurityModel");
 const User = require("../Model/UserModel");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const mailSend = require("../Util/MailSend");
+const SECRET = "secret"; // move to .env in production
 
 /* ---------------- LOGIN SECURITY (NEW) ---------------- */
 exports.loginSecurity = async (req, res) => {
@@ -17,12 +19,32 @@ exports.loginSecurity = async (req, res) => {
     // 2. Compare Password
     const isMatch = await bcrypt.compare(password, guard.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials (Wrong Password)" });
+      return res.status(401).json({ message: "Invalid credentials (Wrong Password)" });
     }
 
-   
+    // 3. Get the corresponding User record for this guard
+    const user = await User.findOne({ profileid: guard._id, role: "guard" });
+    if (!user) {
+      return res.status(500).json({ message: "Guard user record not found" });
+    }
+
+    // 4. Generate JWT Token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: "guard",
+      },
+      SECRET,
+      { expiresIn: "24h" }
+    );
+
     const { password: _, ...guardData } = guard._doc;
-    res.status(200).json({ message: "Login successful", guard: guardData });
+    res.status(200).json({ 
+      message: "Login successful", 
+      token,
+      guard: guardData,
+      userId: user._id
+    });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
