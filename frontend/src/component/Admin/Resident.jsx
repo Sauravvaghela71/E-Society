@@ -372,7 +372,7 @@ export default function ResidentForm() {
 
     <input
       type="file"
-      // Accept mein image/jpeg aur application/pdf dono add kiye hain
+      // 
       accept="image/jpeg, application/pdf"
       className="absolute inset-0 opacity-0 cursor-pointer"
       {...register("idProof", { 
