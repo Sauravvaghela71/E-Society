@@ -7,7 +7,7 @@ router.post("/signup", userController.registerUser)
 router.post("/login", userController.loginUser)
 router.get("/:id", userController.getUserById)
 router.post("/forgotpassword", userController.forgotPassword)
-router.post("/resetpassword", userController.resetPassword)
+router.put("/resetpassword", userController.resetPassword)
 
 // Profile picture upload route
 router.post("/:id/upload-photo", upload.single("profilePic"), userController.uploadProfilePic)

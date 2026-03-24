@@ -90,7 +90,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const secret = "secret"
 const mailSend = require("../Util/MailSend");
-const SECRET = "secret"; // move to .env in production
+// const SECRET = "secret"; // move to .env in production/
 
 // ✅ REGISTER
 const registerUser = async (req, res) => {
@@ -135,7 +135,7 @@ const loginUser = async (req, res) => {
         id: user._id,
         role: user.role,
       },
-      SECRET,
+      secret,
       { expiresIn: "24h" } // ✅ token expires in 24 hours
     );
 
