@@ -15,6 +15,7 @@ export default function ResidentForm() {
     handleSubmit,
     reset,
     setValue,
+      watch,
     formState: { errors }
   } = useForm();
 
@@ -28,14 +29,14 @@ export default function ResidentForm() {
     try {
       const res = await axios.get("http://localhost:5100/api/residents");
       setUser(res.data.data || res.data || []);
-    } catch (err) {}
+    } catch (err) {console.error("Error fetching users:", err);}
   };
 
   const fetchFlats = async () => {
     try {
       const res = await axios.get("http://localhost:5100/api/flats");
       setFlats(res.data.data || []);
-    } catch (err) {}
+    } catch (err) {console.error("Error fetching flats:", err);}
   };
 
   // 1b. Image Preview logic
@@ -166,145 +167,304 @@ export default function ResidentForm() {
 
       {/* Form Area */}
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mb-10 bg-gray-50 p-1">
-          <div className="flex justify-between items-center border-b pb-4 mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">
-              {editId ? "Update Resident Details" : "Add New Resident"}
-            </h2>
+  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mb-10 bg-gray-50 p-1">
+    <div className="flex justify-between items-center border-b pb-4 mb-4">
+      <h2 className="text-2xl font-bold text-gray-800">
+        {editId ? "Update Resident Details" : "Add New Resident"}
+      </h2>
+    </div>
+
+    {/* Personal Info */}
+    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Personal Information</h2>
+      <div className="grid md:grid-cols-3 gap-5">
+        <Input 
+          label="First Name" 
+          required 
+          error={errors.firstName} 
+          register={register("firstName", { 
+            required: "First name is required",
+            pattern: { value: /^[A-Za-z\s]+$/, message: "Numbers are not allowed in name" }
+          })} 
+        />
+        <Input 
+          label="Last Name" 
+          error={errors.lastName}
+          register={register("lastName", { 
+            pattern: { value: /^[A-Za-z\s]+$/, message: "Numbers are not allowed in name" }
+          })} 
+        />
+        <Select 
+          label="Gender" 
+          required 
+          error={errors.gender} 
+          register={register("gender", { required: "Please select gender" })} 
+          options={["Male", "Female", "Other"]} 
+        />
+        <Input 
+          type="date" 
+          label="Date Of Birth" 
+          error={errors.dateOfBirth}
+          register={register("dateOfBirth", { required: "Date of birth is required" })} 
+        />
+      </div>
+    </div>
+
+    {/* Contact Info */}
+    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Contact Information</h2>
+      <div className="grid md:grid-cols-2 gap-5">
+        <Input 
+          label="Mobile Number" 
+          required 
+          error={errors.mobileNumber} 
+          register={register("mobileNumber", { 
+            required: "Mobile number is required", 
+            pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" } 
+          })} 
+        />
+        <Input 
+          label="Email" 
+          error={errors.email} 
+          register={register("email", { 
+            required: "Email is required", 
+            pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } 
+          })} 
+        />
+
+        {/* Password field only for New Registration */}
+        {!editId && (
+          <>
+            <Input 
+              label="Password" 
+              type="password" 
+              required 
+              error={errors.password} 
+              register={register("password", { 
+                required: "Password is required",
+                minLength: { value: 8, message: "Minimum 8 characters required" },
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                  message: "Must include Uppercase, Lowercase, Number and Special Character"
+                }
+              })} 
+            />
+            {/* Adding Confirm Password field as requested in previous turn for complete verification */}
+            <Input 
+              label="Confirm Password" 
+              type="password" 
+              required 
+              error={errors.confirmPassword} 
+              register={register("confirmPassword", { 
+                required: "Please confirm your password",
+                validate: (val) => val === watch('password') || "Passwords do not match"
+              })} 
+            />
+          </>
+        )}
+      </div>
+    </div>
+
+    {/* Flat Details */}
+    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+      <div className="flex justify-between items-center mb-5 border-b pb-2">
+         <h2 className="text-lg font-semibold text-blue-600">Flat Details</h2>
+         <button 
+           type="button" 
+           onClick={() => setShowFlatMap(true)}
+           className="bg-indigo-600 animate-pulse text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition"
+         >
+           View & Select Flat Map
+         </button>
+      </div>
+      
+      <div className="grid md:grid-cols-3 gap-5">
+        <Input 
+          label="Wing" 
+          required 
+          error={errors.wing} 
+          register={register("wing", { required: "Please select wing from map" })} 
+          readOnly={true} 
+          onClick={() => setShowFlatMap(true)} 
+          placeholder="Click Map" 
+        />
+        <Input 
+          label="Flat Number" 
+          required 
+          error={errors.flatNumber} 
+          register={register("flatNumber", { required: "Please select flat from map" })} 
+          readOnly={true} 
+          onClick={() => setShowFlatMap(true)} 
+          placeholder="Click Map" 
+        />
+        <Input 
+          type="number" 
+          label="Floor" 
+          error={errors.floor}
+          register={register("floor", { required: "Please select floor from map" })} 
+          readOnly={true} 
+          onClick={() => setShowFlatMap(true)} 
+          placeholder="Click Map" 
+        />
+      </div>
+    </div>
+
+    {/* Resident Details */}
+    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Resident Details</h2>
+      <div className="grid md:grid-cols-3 gap-5">
+        <Select 
+          label="Resident Type" 
+          required 
+          error={errors.residentType} 
+          register={register("residentType", { required: "Resident type is required" })} 
+          options={["Owner", "Tenant", "Family"]} 
+        />
+        <Input 
+          type="date" 
+          label="Move In Date" 
+          error={errors.moveInDate}
+          register={register("moveInDate", { required: "Move in date is required" })} 
+        />
+        <Input 
+          type="date" 
+          label="Move Out Date" 
+          register={register("moveOutDate")} 
+        />
+      </div>
+    </div>
+
+    {/* Identity & Vehicle */}
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
+        <div className="grid md:grid-cols-1 gap-5">
+              <Select
+              label="ID Proof Type"
+              register={register("idProofType", { required: "Aadhaar Card is mandatory" })}
+              error={errors.idProofType}
+              options={["Aadhaar"]} 
+              />
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-600 uppercase">Upload ID Proof Photo</label>
+            <div className="relative group">
+  <div className={`w-full h-48 rounded-xl border-2 border-dashed overflow-hidden bg-gray-50 flex items-center justify-center transition-colors ${errors.idProof ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+    
+    {/* Preview Logic for Image vs PDF */}
+    {preview || user.idProof ? (
+      // Agar file image hai toh image dikhao, agar PDF hai toh text dikhao
+      (preview?.startsWith("data:image") || user.idProof?.endsWith(".jpg") || user.idProof?.endsWith(".jpeg")) ? (
+        <img src={preview || user.idProof} alt="ID Proof Preview" className="w-full h-full object-contain" />
+      ) : (
+        <div className="text-center">
+          <div className="text-4xl mb-2">📄</div>
+          <span className="text-gray-600 font-semibold text-sm">PDF Document Selected</span>
+        </div>
+      )
+    ) : (
+      <div className="text-center">
+        <span className="text-gray-400 text-sm block">No file selected</span>
+        <span className="text-blue-500 text-xs font-semibold">Upload Aadhaar (JPEG/PDF - Max 30KB)</span>
+      </div>
+    )}
+  </div>
+
+    <input
+      type="file"
+      // Accept mein image/jpeg aur application/pdf dono add kiye hain
+      accept="image/jpeg, application/pdf"
+      className="absolute inset-0 opacity-0 cursor-pointer"
+      {...register("idProof", { 
+      required: editId ? false : "Aadhaar file is required",
+      validate: {
+        // Size validation: 30KB limit
+        lessThan30KB: (files) => {
+          if (!files[0]) return true; 
+          const fileSize = files[0]?.size;
+          const maxSize = 30 * 1024; 
+          return fileSize <= maxSize || `File is too large (${(fileSize/1024).toFixed(1)} KB). Max 30 KB allowed.`;
+        },
+        // Format validation: Only JPEG and PDF
+        acceptedFormats: (files) => {
+          if (!files[0]) return true;
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'application/pdf'];
+          return allowedTypes.includes(files[0]?.type) || "Only JPEG and PDF files are allowed";
+        }
+      }
+              })} 
+              onChange={(e) => {
+                register("idProof").onChange(e);
+               // Handle preview only for images, not for PDFs
+                handleImageChange(e);
+              }}
+            />
+
+            {/* Error Message Display */}
+            {errors.idProof && (
+              <p className="text-red-500 text-xs mt-1 font-bold">
+                {errors.idProof.message}
+              </p>
+            )}
           </div>
-
-          {/* Personal Info */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Personal Information</h2>
-            <div className="grid md:grid-cols-3 gap-5">
-              <Input label="First Name" required error={errors.firstName} register={register("firstName", { required: "First name required" })} />
-              <Input label="Last Name" register={register("lastName")} />
-              <Select label="Gender" required error={errors.gender} register={register("gender", { required: "Select gender" })} options={["Male", "Female", "Other"]} />
-              <Input type="date" label="Date Of Birth" register={register("dateOfBirth")} />
-            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Contact Info */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Contact Information</h2>
-            <div className="grid md:grid-cols-2 gap-5">
-              <Input label="Mobile Number" required error={errors.mobileNumber} register={register("mobileNumber", { required: "Mobile required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid 10 digit number" } })} />
-              <Input label="Email" error={errors.email} register={register("email", { required: "Email required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email" } })} />
+      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Vehicle Details</h2>
+        <Input 
+          label="Vehicle Number" 
+          error={errors.vehicleNumber}
+          register={register("vehicleNumber", {
+            pattern: { value: /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}$/, message: "Invalid format (Ex: MH01AB1234)" }
+          })} 
+        />
+      </div>
+    </div>
 
-              {/* Password field only for New Registration */}
-              {!editId && (
-                <Input label="Password" type="password" required error={errors.password} register={register("password", { required: "Password required" })} />
-              )}
-            </div>
-          </div>
+    {/* Emergency & Status */}
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
+        <div className="grid md:grid-cols-2 gap-5">
+          <Input 
+            label="Name" 
+            error={errors.emergencyContactName}
+            register={register("emergencyContactName", { 
+              required: "Emergency contact name required",
+              pattern: { value: /^[A-Za-z\s]+$/, message: "Only letters allowed" }
+            })} 
+          />
+          <Input 
+            label="Number" 
+            error={errors.emergencyContactNumber} 
+            register={register("emergencyContactNumber", { 
+              required: "Emergency number required", 
+              pattern: { value: /^[0-9]{10}$/, message: "Enter 10 digits" } 
+            })} 
+          />
+        </div>
+      </div>
+      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
+        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Status</h2>
+        <Select 
+          label="Status" 
+          error={errors.status}
+          register={register("status", { required: "Select status" })} 
+          options={["Active", "Inactive"]} 
+        />
+      </div>
+    </div>
 
-          {/* Flat Details */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-            <div className="flex justify-between items-center mb-5 border-b pb-2">
-               <h2 className="text-lg font-semibold text-blue-600">Flat Details</h2>
-               <button 
-                 type="button" 
-                 onClick={() => setShowFlatMap(true)}
-                 className="bg-indigo-600 animate-pulse text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition"
-               >
-                 View & Select Flat Map
-               </button>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-5">
-              <Input label="Wing" required error={errors.wing} register={register("wing", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
-              <Input label="Flat Number" required error={errors.flatNumber} register={register("flatNumber", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
-              <Input type="number" label="Floor" register={register("floor", { required: "Select from map" })} readOnly={true} onClick={() => setShowFlatMap(true)} placeholder="Click Map" />
-            </div>
-          </div>
-
-          {/* Resident Details */}
-          <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-            <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Resident Details</h2>
-            <div className="grid md:grid-cols-3 gap-5">
-              <Select label="Resident Type" required error={errors.residentType} register={register("residentType", { required: "Required" })} options={["Owner", "Tenant", "Family"]} />
-              <Input type="date" label="Move In Date" register={register("moveInDate", { required: "Move in date required" })} />
-              <Input type="date" label="Move Out Date" register={register("moveOutDate")} />
-            </div>
-          </div>
-
-          {/* Identity & Vehicle */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Identity Details */}
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
-              <div className="grid md:grid-cols-1 gap-5">
-                <Select
-                  label="ID Proof Type"
-                  register={register("idProofType")}
-                  options={["Aadhaar", "PAN", "Voter ID"]}
-                />
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-600 uppercase">Upload ID Proof Photo</label>
-                  <div className="relative group">
-                    <div className="w-full h-48 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
-                      {preview || user.idProof ? (
-                        <img
-                          src={preview || user.idProof}
-                          alt="ID Proof Preview"
-                          className="w-full h-full object-contain"
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-sm">No image selected</span>
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      {...register("idProof")} 
-                      onChange={(e) => {
-                        register("idProof").onChange(e);
-                        handleImageChange(e);
-                      }}
-                    />
-
-                    <div className="mt-2 text-center">
-                      <span className="text-blue-600 text-sm font-semibold hover:underline">
-                        Click to change photo
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Vehicle Details */}
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Vehicle Details</h2>
-              <Input label="Vehicle Number" register={register("vehicleNumber")} />
-            </div>
-          </div>
-
-          {/* Emergency & Status */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
-              <div className="grid md:grid-cols-2 gap-5">
-                <Input label="Name" register={register("emergencyContactName", { required: "Emergency contact name required" })} />
-                <Input label="Number" error={errors.emergencyContactNumber} register={register("emergencyContactNumber", { required: "Emergency contact number required", pattern: { value: /^[0-9]{10}$/, message: "Enter valid number" } })} />
-              </div>
-            </div>
-            <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Status</h2>
-              <Select label="Status" register={register("status")} options={["Active", "Inactive"]} />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4 bg-white p-5 rounded-xl border shadow-sm">
-            <button type="button" onClick={closeForm} className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm">
-              {editId ? "Update Resident" : "Save Resident"}
-            </button>
-          </div>
-        </form>
-      )}
+    <div className="flex justify-end gap-4 bg-white p-5 rounded-xl border shadow-sm">
+      <button type="button" onClick={closeForm} className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition">Cancel</button>
+      <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm">
+        {editId ? "Update Resident" : "Save Resident"}
+      </button>
+    </div>
+  </form>
+    )}
 
       {/* Table Area */}
       {!showForm && (
