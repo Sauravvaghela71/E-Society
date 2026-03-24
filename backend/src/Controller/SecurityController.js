@@ -92,7 +92,7 @@ exports.createSecurity = async (req, res) => {
       profileid: security._id,
       status: "active"
     });
-
+    console.log("Creating guard and user accounts:", { security, user });
     // Save both simultaneously
     await Promise.all([security.save(), user.save()]);
 

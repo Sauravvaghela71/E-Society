@@ -3,7 +3,7 @@ const mailer = require("nodemailer")
 require("dotenv").config()
 
 const mailSend = async(to,subject,text)=>{
-
+    console.log("Preparing to send email:", { to, subject, text });
     const transporter = mailer.createTransport({
         service:"gmail",
         auth:{
