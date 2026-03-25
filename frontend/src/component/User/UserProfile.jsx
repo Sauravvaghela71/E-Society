@@ -84,6 +84,14 @@ const UserProfile = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validate 30KB Limit before uploading
+    if (file.size > 30 * 1024) {
+      alert(`File is too large (${(file.size / 1024).toFixed(1)} KB). Maximum 30KB allowed.`);
+      // clear the input
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     // Preview instantly (optimistic UI)
     const localPreview = URL.createObjectURL(file);
     setUser((prev) => ({ ...prev, profilePic: localPreview }));

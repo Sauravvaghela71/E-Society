@@ -161,7 +161,16 @@ export default function UserComplaint() {
 
                 <div>
                   <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Photo Proof (Optional)</label>
-                  <input type="file" accept="image/*" {...register("photo")} className="w-full border-2 border-gray-100 p-2 rounded-xl focus:border-orange-500 outline-none" />
+                  <input type="file" accept="image/jpeg, image/png, application/pdf" {...register("photo", {
+                    validate: {
+                      lessThan30KB: (files) => {
+                        if (!files || !files[0]) return true;
+                        return files[0].size <= 30 * 1024 || `Max 30KB allowed. File is ${(files[0].size/1024).toFixed(1)}KB`;
+                      }
+                    }
+                  })} className={`w-full border-2 p-2 rounded-xl outline-none ${errors.photo ? 'border-red-400 focus:border-red-500' : 'border-gray-100 focus:border-orange-500'}`} />
+                  {errors.photo && <span className="text-red-500 text-xs mt-1 font-bold block">{errors.photo.message}</span>}
+                  <p className="text-[10px] text-gray-400 mt-1 italic">JPEG/PNG/PDF only (Max 30KB)</p>
                 </div>
 
                 <div className="pt-4 flex gap-3">
