@@ -1,5 +1,6 @@
 const Flat = require("../Model/FlatModel");
 
+// GET /api/flats — list all flats
 exports.getAllFlats = async (req, res) => {
     try {
         const flats = await Flat.find().populate('residentId', 'firstName lastName mobileNumber');
@@ -9,10 +10,18 @@ exports.getAllFlats = async (req, res) => {
     }
 };
 
+// PUT /api/flats/:id — update flat details (status, bhkType, rent, yearBuilt, maintenanceCost, tax, area)
 exports.updateFlatStatus = async (req, res) => {
     try {
-        const { status, residentId } = req.body;
-        const flat = await Flat.findByIdAndUpdate(req.params.id, { status, residentId }, { new: true });
+        const allowedFields = ["status", "residentId", "bhkType", "rent", "yearBuilt", "maintenanceCost", "tax", "area", "propertyValue"];
+        const updateData = {};
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field] === "" ? null : req.body[field];
+            }
+        });
+
+        const flat = await Flat.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
         if (!flat) return res.status(404).json({ success: false, message: "Flat not found" });
         res.status(200).json({ success: true, data: flat });
     } catch (error) {
@@ -20,6 +29,7 @@ exports.updateFlatStatus = async (req, res) => {
     }
 };
 
+// GET /api/flats/seed — seed mock flats
 exports.seedMockFlats = async (req, res) => {
     try {
         const wings = ["A", "B", "C", "D", "E", "F"];
@@ -39,11 +49,8 @@ exports.seedMockFlats = async (req, res) => {
                 }
             }
         }
-        
-        await Flat.insertMany(flatsToCreate, { ordered: false }).catch(e => {
-            // ordered: false ignores duplicates
-        });
-        
+
+        await Flat.insertMany(flatsToCreate, { ordered: false }).catch(() => {});
         res.status(201).json({ success: true, message: "Mock flats seeded!" });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
