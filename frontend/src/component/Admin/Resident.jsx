@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import FlatDetails from "./FlatDetails";
 
 export default function ResidentForm() {
   const [showForm, setShowForm] = useState(false);
@@ -10,6 +11,7 @@ export default function ResidentForm() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editId, setEditId] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [selectedResident, setSelectedResident] = useState(null);
   const {
     register,
     handleSubmit,
@@ -278,7 +280,7 @@ export default function ResidentForm() {
          </button>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-5">
+      <div className="grid md:grid-cols-4 gap-5">
         <Input 
           label="Wing" 
           required 
@@ -305,6 +307,13 @@ export default function ResidentForm() {
           readOnly={true} 
           onClick={() => setShowFlatMap(true)} 
           placeholder="Click Map" 
+        />
+        <Select
+          label="BHK Type"
+          required
+          error={errors.bhkType}
+          register={register("bhkType", { required: "Please select BHK type" })}
+          options={["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK"]}
         />
       </div>
     </div>
@@ -474,6 +483,7 @@ export default function ResidentForm() {
               <table className="min-w-full text-sm text-left">
                 <thead className="bg-gray-100 text-gray-700 font-semibold border-b">
                   <tr className="whitespace-nowrap">
+                    <th className="px-4 py-3">#</th>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Wing-Flat</th>
                     <th className="px-4 py-3">Type</th>
@@ -483,8 +493,9 @@ export default function ResidentForm() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredUsers.map((u) => (
+                  {filteredUsers.map((u, idx) => (
                     <tr key={u._id} className="hover:bg-blue-50/50 transition whitespace-nowrap">
+                      <td className="px-4 py-3 text-gray-400 text-xs font-bold">{idx + 1}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
                       <td className="px-4 py-3"><span className="bg-gray-100 px-2 py-1 rounded font-mono">{u.wing} - {u.flatNumber}</span></td>
                       <td className="px-4 py-3">{u.residentType}</td>
@@ -494,7 +505,11 @@ export default function ResidentForm() {
                           {u.status || "N/A"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 flex gap-2">
+                      <td className="px-4 py-3 flex gap-2 items-center">
+                        <button
+                          onClick={() => setSelectedResident(u)}
+                          className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-xs font-semibold"
+                        >View</button>
                         <button onClick={() => handleEdit(u)} className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition text-xs font-semibold">Edit</button>
                         <button onClick={() => handleDelete(u._id)} className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-xs font-semibold">Delete</button>
                       </td>
@@ -511,15 +526,23 @@ export default function ResidentForm() {
 
       {/* Flat Map Modal Popup */}
       {showFlatMap && (
-        <FlatMapModal 
-          flats={flats} 
-          onClose={() => setShowFlatMap(false)} 
+        <FlatMapModal
+          flats={flats}
+          onClose={() => setShowFlatMap(false)}
           onSelect={(flat) => {
             setValue("wing", flat.wing);
             setValue("flatNumber", flat.flatNumber);
             setValue("floor", flat.floor);
             setShowFlatMap(false);
-          }} 
+          }}
+        />
+      )}
+
+      {/* Flat Details Drawer */}
+      {selectedResident && (
+        <FlatDetails
+          resident={selectedResident}
+          onClose={() => setSelectedResident(null)}
         />
       )}
 
