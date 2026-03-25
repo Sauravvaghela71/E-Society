@@ -308,13 +308,7 @@ export default function ResidentForm() {
           onClick={() => setShowFlatMap(true)} 
           placeholder="Click Map" 
         />
-        <Select
-          label="BHK Type"
-          required
-          error={errors.bhkType}
-          register={register("bhkType", { required: "Please select BHK type" })}
-          options={["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK"]}
-        />
+        
       </div>
     </div>
 
@@ -528,6 +522,7 @@ export default function ResidentForm() {
       {showFlatMap && (
         <FlatMapModal
           flats={flats}
+          currentResidentId={editId}
           onClose={() => setShowFlatMap(false)}
           onSelect={(flat) => {
             setValue("wing", flat.wing);
@@ -551,7 +546,7 @@ export default function ResidentForm() {
 }
 
 // Flat Map Component
-function FlatMapModal({ flats, onClose, onSelect }) {
+function FlatMapModal({ flats, onClose, onSelect, currentResidentId }) {
   const uniqueWings = [...new Set(flats.map(f => f.wing))].sort();
   const [activeWing, setActiveWing] = useState(uniqueWings[0] || "A");
 
@@ -592,26 +587,39 @@ function FlatMapModal({ flats, onClose, onSelect }) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {wingFlats.filter(f => f.floor === floor).sort((a,b) => a.flatNumber.localeCompare(b.flatNumber)).map(flat => {
                   const isVacant = flat.status === "Vacant";
+                  const isOwnedByCurrent = currentResidentId && flat.residentId && (flat.residentId._id === currentResidentId || flat.residentId === currentResidentId);
+                  const isSelectable = isVacant || isOwnedByCurrent;
+
                   return (
                     <div 
                       key={flat._id} 
-                      onClick={() => isVacant && onSelect(flat)}
+                      onClick={() => isSelectable && onSelect(flat)}
                       className={`relative p-4 rounded-xl border-2 transition-all group ${
-                        isVacant 
+                        isOwnedByCurrent 
+                        ? 'border-indigo-400 bg-indigo-50 cursor-pointer hover:bg-indigo-500 hover:border-indigo-600'
+                        : isVacant 
                         ? 'border-green-400 bg-green-50 cursor-pointer hover:bg-green-500 hover:border-green-600' 
-                        : 'border-slate-200 bg-slate-100 cursor-not-allowed opacity-75'
+                        : 'border-slate-200 bg-slate-100 cursor-not-allowed opacity-75 hover:opacity-100 hover:border-slate-300'
                       }`}
                     >
-                      <span className={`block text-lg font-black ${isVacant ? 'text-green-700 group-hover:text-white' : 'text-slate-500'}`}>
+                      <span className={`block text-lg font-black ${isOwnedByCurrent ? 'text-indigo-700 group-hover:text-white' : isVacant ? 'text-green-700 group-hover:text-white' : 'text-slate-500'}`}>
                         {flat.flatNumber}
                       </span>
                       <span className={`mt-1 inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
-                        isVacant 
+                        isOwnedByCurrent 
+                        ? 'bg-indigo-200 text-indigo-800 group-hover:bg-indigo-400 group-hover:text-white' 
+                        : isVacant 
                         ? 'bg-green-200 text-green-800 group-hover:bg-green-400 group-hover:text-white' 
-                        : 'bg-slate-200 text-slate-500'
+                        : 'bg-slate-200 text-slate-600'
                       }`}>
-                        {flat.status}
+                        {isOwnedByCurrent ? "Current Flat" : flat.status}
                       </span>
+                      
+                      {!isSelectable && flat.residentId && (
+                        <p className="text-[9px] font-bold text-slate-500 uppercase mt-2 border-t border-slate-200 pt-1 truncate">
+                          🔒 {flat.residentId.firstName || "Booked"}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
