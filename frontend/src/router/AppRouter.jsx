@@ -4,6 +4,7 @@ import ProtectedRoute from "../component/ProtectRoute";
 
 import Login from "../component/User/Login";
 import HomePage from "../component/User/HomePage";
+import AdminRegister from "../component/AdminRegister";
 
 // Admin
 import AdminLayout from "../component/Admin/AdminLayout";
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
 
   // ✅ Public Routes
   { path: "/login", element: <Login /> },
+  { path: "/admin/register", element: <AdminRegister /> },
   { path: "/", element: <HomePage /> },
   { path: "/forgotpassword", element: <ForgotPassword /> },
   { path: "/resetpassword/:token", element: <ResetPassword/> },

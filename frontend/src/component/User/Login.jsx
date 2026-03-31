@@ -189,11 +189,18 @@ export default function Login() {
             </button>
           </form>
           
-          <div className="mt-8 text-center text-sm font-medium text-gray-500">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 font-bold hover:underline">
-              Contact Admin
-            </Link>
+          <div className="mt-8 text-center text-sm font-medium text-gray-500 space-y-2">
+            <div>
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 font-bold hover:underline">
+                Contact Admin
+              </Link>
+            </div>
+            <div>
+              <Link to="/admin/register" className="text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded-full">
+                Register as Admin
+              </Link>
+            </div>
           </div>
 
         </div>
