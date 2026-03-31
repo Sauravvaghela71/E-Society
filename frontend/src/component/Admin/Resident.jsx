@@ -108,6 +108,21 @@ export default function ResidentForm() {
     }
   };
 
+  // 3b. STATUS TOGGLE LOGIC
+  const handleStatusToggle = async (resident) => {
+    // Default to Active if not set, then toggle
+    const currentStatus = resident.status || "Active";
+    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+    try {
+      const config = { headers: { "Content-Type": "application/json" } };
+      await axios.put(`http://localhost:5100/api/residents/${resident._id}`, { status: newStatus }, config);
+      setUser((prev) => prev.map((u) => (u._id === resident._id ? { ...u, status: newStatus } : u)));
+    } catch (error) {
+      console.error("Status update error:", error);
+      alert("Error updating status");
+    }
+  };
+
   // 4. EDIT HELPER (Mapping data to form)
   const handleEdit = (resident) => {
     setEditId(resident._id);
@@ -146,39 +161,63 @@ export default function ResidentForm() {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 min-h-screen">
 
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-5 rounded-xl shadow-sm border">
-        <h1 className="text-2xl font-bold text-gray-800">Resident Management</h1>
-        <div className="flex w-full md:w-auto gap-4">
-          <input
-            type="text"
-            placeholder="Search by Name, Flat, or Mobile..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full md:w-72 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
-          />
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-800 p-8 rounded-3xl shadow-xl border-none relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-10 w-40 h-40 bg-blue-400 opacity-10 rounded-full blur-2xl translate-y-1/2 pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <h1 className="text-3xl font-black text-white tracking-tight">Resident Management</h1>
+          <p className="text-blue-200 mt-1 text-sm font-medium">Manage society residents, flats, and access levels</p>
+        </div>
+        
+        <div className="flex w-full md:w-auto gap-4 relative z-10">
+          <div className="relative w-full md:w-80">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-blue-200">🔍</span>
+            <input
+              type="text"
+              placeholder="Search by Name, Flat..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 text-white placeholder-blue-200 rounded-2xl focus:ring-2 focus:ring-white/50 focus:bg-white/20 outline-none backdrop-blur-md transition-all shadow-inner"
+            />
+          </div>
           {!showForm && (
             <button
               onClick={() => { reset({}); setShowForm(true); }}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 transition text-white rounded-lg shadow-sm whitespace-nowrap"
+              className="px-6 py-3 bg-white text-indigo-900 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all font-bold rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.3)] whitespace-nowrap flex items-center gap-2"
             >
-              + Add Resident
+              <span className="text-lg">+</span> Add Resident
             </button>
           )}
         </div>
       </div>
 
-      {/* Form Area */}
-      {showForm && (
-  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mb-10 bg-gray-50 p-1">
-    <div className="flex justify-between items-center border-b pb-4 mb-4">
-      <h2 className="text-2xl font-bold text-gray-800">
-        {editId ? "Update Resident Details" : "Add New Resident"}
-      </h2>
-    </div>
+    {/* Form Area */}
+    {showForm && (
+      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white mb-10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 opacity-5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-indigo-50/50 relative z-10">
+          <h2 className="text-2xl font-black text-indigo-900 tracking-tight flex items-center gap-3">
+            <span className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md">
+              {editId ? "✏️" : "🏠"}
+            </span>
+            {editId ? "Update Resident Details" : "Add New Resident"}
+          </h2>
+          <button 
+            onClick={closeForm} 
+            className="w-10 h-10 bg-white hover:bg-red-50 rounded-full border border-gray-100 hover:border-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center text-xl transition-all shadow-sm"
+          >
+            &times;
+          </button>
+        </div>
 
-    {/* Personal Info */}
-    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Personal Information</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 relative z-10">
+          {/* Personal Info */}
+          <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+            <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Personal Information</h2>
       <div className="grid md:grid-cols-3 gap-5">
         <Input 
           label="First Name" 
@@ -213,8 +252,9 @@ export default function ResidentForm() {
     </div>
 
     {/* Contact Info */}
-    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Contact Information</h2>
+    <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+      <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Contact Information</h2>
       <div className="grid md:grid-cols-2 gap-5">
         <Input 
           label="Mobile Number" 
@@ -268,13 +308,14 @@ export default function ResidentForm() {
     </div>
 
     {/* Flat Details */}
-    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-      <div className="flex justify-between items-center mb-5 border-b pb-2">
-         <h2 className="text-lg font-semibold text-blue-600">Flat Details</h2>
+    <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+      <div className="flex justify-between items-center mb-5 pb-2">
+         <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase items-center gap-2 flex m-0"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Flat Details</h2>
          <button 
            type="button" 
            onClick={() => setShowFlatMap(true)}
-           className="bg-indigo-600 animate-pulse text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 transition"
+           className="bg-indigo-600 animate-pulse text-white font-black tracking-wide px-5 py-2 rounded-xl text-xs hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-md z-10"
          >
            View & Select Flat Map
          </button>
@@ -313,8 +354,9 @@ export default function ResidentForm() {
     </div>
 
     {/* Resident Details */}
-    <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-      <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Resident Details</h2>
+    <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+      <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Resident Details</h2>
       <div className="grid md:grid-cols-3 gap-5">
         <Select 
           label="Resident Type" 
@@ -339,8 +381,9 @@ export default function ResidentForm() {
 
     {/* Identity & Vehicle */}
     <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Identity Details</h2>
+      <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+        <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2 relative z-10"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Identity Details</h2>
         <div className="grid md:grid-cols-1 gap-5">
               <Select
               label="ID Proof Type"
@@ -414,8 +457,9 @@ export default function ResidentForm() {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Vehicle Details</h2>
+      <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+        <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2 relative z-10"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Vehicle Details</h2>
         <Input 
           label="Vehicle Number" 
           error={errors.vehicleNumber}
@@ -428,8 +472,9 @@ export default function ResidentForm() {
 
     {/* Emergency & Status */}
     <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Emergency Contact</h2>
+      <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+        <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2 relative z-10"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Emergency Contact</h2>
         <div className="grid md:grid-cols-2 gap-5">
           <Input 
             label="Name" 
@@ -449,8 +494,9 @@ export default function ResidentForm() {
           />
         </div>
       </div>
-      <div className="bg-white shadow-sm rounded-xl border border-gray-100 p-6 hover:shadow-md transition">
-        <h2 className="text-lg font-semibold mb-5 text-blue-600 border-b pb-2">Status</h2>
+      <div className="bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-40 rounded-full blur-2xl pointer-events-none"></div>
+        <h2 className="text-[11px] font-black tracking-widest text-indigo-900/40 uppercase mb-5 flex items-center gap-2 relative z-10"><span className="w-2 h-2 rounded-full bg-indigo-400"></span> Status</h2>
         <Select 
           label="Status" 
           error={errors.status}
@@ -460,52 +506,80 @@ export default function ResidentForm() {
       </div>
     </div>
 
-    <div className="flex justify-end gap-4 bg-white p-5 rounded-xl border shadow-sm">
-      <button type="button" onClick={closeForm} className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition">Cancel</button>
-      <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm">
+    <div className="flex justify-end gap-4 pt-6 border-t border-gray-100 mt-8 relative z-10">
+      <button type="button" onClick={closeForm} className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 px-8 py-3 rounded-xl font-bold transition-all shadow-sm">
+        Cancel
+      </button>
+      <button type="submit" className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-10 py-3 rounded-xl font-black shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-all hover:-translate-y-0.5 active:translate-y-0">
         {editId ? "Update Resident" : "Save Resident"}
       </button>
     </div>
   </form>
+  </div>
     )}
 
       {/* Table Area */}
       {!showForm && (
-        <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           {filteredUsers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-left">
-                <thead className="bg-gray-100 text-gray-700 font-semibold border-b">
+                <thead className="bg-indigo-50/80 text-indigo-900 font-extrabold uppercase tracking-wider text-[11px] border-b border-indigo-100">
                   <tr className="whitespace-nowrap">
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Wing-Flat</th>
-                    <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Mobile</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-6 py-4 rounded-tl-3xl">#</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4">Wing-Flat</th>
+                    <th className="px-6 py-4">Type</th>
+                    <th className="px-6 py-4">Mobile</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 rounded-tr-3xl">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-50/50">
                   {filteredUsers.map((u, idx) => (
-                    <tr key={u._id} className="hover:bg-blue-50/50 transition whitespace-nowrap">
-                      <td className="px-4 py-3 text-gray-400 text-xs font-bold">{idx + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
-                      <td className="px-4 py-3"><span className="bg-gray-100 px-2 py-1 rounded font-mono">{u.wing} - {u.flatNumber}</span></td>
-                      <td className="px-4 py-3">{u.residentType}</td>
-                      <td className="px-4 py-3">{u.mobileNumber}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                          {u.status || "N/A"}
+                    <tr key={u._id} className="hover:bg-indigo-50/40 transition-colors whitespace-nowrap group">
+                      <td className="px-6 py-4 text-gray-400 text-xs font-black">{idx + 1}</td>
+                      <td className="px-6 py-4 font-bold text-gray-800 flex items-center gap-3 border-none">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-400 text-white flex items-center justify-center text-xs shadow-md">
+                          {u.firstName ? u.firstName.charAt(0) : 'U'}{u.lastName ? u.lastName.charAt(0) : ''}
+                        </div>
+                        {u.firstName} {u.lastName}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="bg-white border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-black text-xs shadow-sm inline-block min-w-[70px] text-center">
+                          {u.wing} - {u.flatNumber}
                         </span>
                       </td>
-                      <td className="px-4 py-3 flex gap-2 items-center">
-                        <button
-                          onClick={() => setSelectedResident(u)}
-                          className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-xs font-semibold"
-                        >View</button>
-                        <button onClick={() => handleEdit(u)} className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition text-xs font-semibold">Edit</button>
-                        <button onClick={() => handleDelete(u._id)} className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-xs font-semibold">Delete</button>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${u.residentType === 'Owner' ? 'bg-amber-100 text-amber-700' : 'bg-cyan-100 text-cyan-700'}`}>
+                          {u.residentType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-gray-600">{u.mobileNumber}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleStatusToggle(u)}
+                            className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!u.status || u.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!u.status || u.status === 'Active' ? 'translate-x-5' : 'translate-x-0'}`}
+                            />
+                          </button>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${!u.status || u.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                            {!u.status || u.status === 'Active' ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2 items-center opacity-70 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setSelectedResident(u)}
+                            className="bg-white border border-indigo-100 px-3 py-1.5 text-indigo-600 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all text-xs font-bold shadow-sm"
+                          >View</button>
+                          <button onClick={() => handleEdit(u)} className="bg-white border border-yellow-100 px-3 py-1.5 text-yellow-600 rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition-all text-xs font-bold shadow-sm">Edit</button>
+                          <button onClick={() => handleDelete(u._id)} className="bg-white border border-red-100 px-3 py-1.5 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all text-xs font-bold shadow-sm">Delete</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -513,7 +587,11 @@ export default function ResidentForm() {
               </table>
             </div>
           ) : (
-            <div className="p-10 text-center text-gray-500">No residents found.</div>
+            <div className="p-16 text-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">📭</div>
+              <h3 className="text-xl font-bold text-gray-800">No Residents Found</h3>
+              <p className="text-gray-500 mt-2">Try adjusting your search or add a new resident.</p>
+            </div>
           )}
         </div>
       )}
@@ -636,18 +714,20 @@ function FlatMapModal({ flats, onClose, onSelect, currentResidentId }) {
 // Reusable Input Component
 function Input({ label, register, error, required, type = "text", readOnly, onClick, placeholder }) {
   return (
-    <div onClick={onClick}>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+    <div onClick={onClick} className={readOnly ? 'cursor-pointer' : ''}>
+      <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">{label} {required && <span className="text-red-500">*</span>}</label>
       <input
         type={type}
         {...register}
         readOnly={readOnly}
         placeholder={placeholder}
-        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm ${
-          error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"
-        } ${readOnly ? "bg-gray-100 cursor-pointer" : "bg-white"}`}
+        className={`w-full border-2 p-3 font-semibold text-gray-800 rounded-xl outline-none transition-all shadow-sm focus:bg-white ${
+          readOnly ? "bg-gray-50/50 cursor-pointer border-dashed border-indigo-200 hover:bg-indigo-50/50 hover:border-indigo-400" : "bg-white/50 backdrop-blur-sm"
+        } ${
+          error ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10" : !readOnly ? "border-gray-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200" : ""
+        }`}
       />
-      {error && <p className="text-red-500 text-xs mt-1 font-medium">{error.message}</p>}
+      {error && <p className="text-red-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><span className="bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center text-[8px]">!</span>{error.message}</p>}
     </div>
   );
 }
@@ -656,15 +736,15 @@ function Input({ label, register, error, required, type = "text", readOnly, onCl
 function Select({ label, register, options, error, required }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+      <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">{label} {required && <span className="text-red-500">*</span>}</label>
       <select
         {...register}
-        className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm bg-white ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
+        className={`w-full border-2 p-3 font-semibold text-gray-800 rounded-xl outline-none transition-all shadow-sm bg-white/50 backdrop-blur-sm focus:bg-white ${error ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10" : "border-gray-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200"}`}
       >
         <option value="">Select...</option>
         {options.map((item) => <option key={item} value={item}>{item}</option>)}
       </select>
-      {error && <p className="text-red-500 text-xs mt-1 font-medium">{error.message}</p>}
+      {error && <p className="text-red-500 text-[11px] mt-1.5 font-bold flex items-center gap-1"><span className="bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center text-[8px]">!</span>{error.message}</p>}
     </div>
   );
 }
