@@ -53,6 +53,18 @@ export default function Security() {
     }
   };
 
+  const handleStatusToggle = async (guard) => {
+    const currentStatus = guard.status || "active";
+    const newStatus = currentStatus === "active" ? "inactive" : "active";
+    try {
+      await axios.put(`http://localhost:5100/api/security/${guard._id}`, { status: newStatus });
+      setGuards((prev) => prev.map((g) => (g._id === guard._id ? { ...g, status: newStatus } : g)));
+    } catch (error) {
+      console.error("Status update error:", error);
+      alert("Error updating status");
+    }
+  };
+
   const handleEdit = (guard) => {
     setEditingId(guard._id);
     const editData = { ...guard };
@@ -86,23 +98,33 @@ export default function Security() {
       <div className="max-w-7xl mx-auto">
         
         {/* HEADER */}
-        <div className="flex flex-col md:flex-vrow justify-between items-center mb-8 gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div>
-            <h1 className="text-3xl font-extrabold text-blue-900">Security Management</h1>
-            <p className="text-gray-500 text-sm mt-1">Personnel Directory</p>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-800 p-8 rounded-3xl shadow-xl border-none relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-10 w-40 h-40 bg-blue-400 opacity-10 rounded-full blur-2xl translate-y-1/2 pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <h1 className="text-3xl font-black text-white tracking-tight">Security Management</h1>
+            <p className="text-blue-200 text-sm mt-1 font-medium">Manage security personnel, shifts, and access</p>
           </div>
           
-          <div className="flex gap-3 w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Search guard..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-64 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+          <div className="flex gap-3 w-full md:w-auto relative z-10">
+            <div className="relative w-full md:w-80">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-blue-200">🔍</span>
+              <input
+                type="text"
+                placeholder="Search guard..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white/10 border border-white/20 text-white placeholder-blue-200 rounded-2xl focus:ring-2 focus:ring-white/50 focus:bg-white/20 outline-none backdrop-blur-md transition-all shadow-inner"
+              />
+            </div>
             {!showForm && (
-              <button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-md transition-all">
-                + Add Guard
+              <button 
+                onClick={() => setShowForm(true)} 
+                className="px-6 py-3 bg-white text-indigo-900 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all font-bold rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.3)] whitespace-nowrap flex items-center gap-2"
+              >
+                <span className="text-lg">+</span> Add Guard
               </button>
             )}
           </div>
@@ -110,15 +132,25 @@ export default function Security() {
 
         {/* FORM SECTION */}
         {showForm && (
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-100 mb-10">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 border-l-4 border-blue-600 pl-3">
+          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white mb-10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 opacity-5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+            
+            <div className="flex justify-between items-center mb-8 pb-4 border-b border-indigo-50/50 relative z-10">
+              <h2 className="text-2xl font-black text-indigo-900 tracking-tight flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md">
+                  {editingId ? "✏️" : "🛡️"}
+                </span>
                 {editingId ? "Update Guard Details" : "Register New Guard"}
               </h2>
-              <button onClick={closeForm} className="text-gray-400 hover:text-red-500 text-3xl">&times;</button>
+              <button 
+                onClick={closeForm} 
+                className="w-10 h-10 bg-white hover:bg-red-50 rounded-full border border-gray-100 hover:border-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center text-xl transition-all shadow-sm"
+              >
+                &times;
+              </button>
             </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 relative z-10">
           {/* Row 1: Names & Mobile */}
           <div className="grid md:grid-cols-4 gap-4">
             <FormInput 
@@ -198,7 +230,7 @@ export default function Security() {
           </div>
 
           {/* Row 3: Address Details */}
-          <div className="grid md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl">
+          <div className="grid md:grid-cols-4 gap-5 bg-gradient-to-tr from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <FormInput label="City" register={register("city", { required: "City required" })} error={errors.city} />
             <FormInput label="State" register={register("state", { required: "State required" })} error={errors.state} />
             <FormInput 
@@ -212,9 +244,9 @@ export default function Security() {
             <FormInput label="Address" register={register("address", { required: "Address required" , message: "Address is required" })} error={errors.address} />
           </div>
 
-          {/* Row 4: ID Type, ID Number, Shift, Status */}
-          <div className="grid md:grid-cols-4 gap-4 bg-blue-50/50 p-4 rounded-xl">
-            <div className="grid md:grid-cols-2 gap-6 bg-blue-50/30 p-5 rounded-2xl border border-blue-100">
+          {/* Row 4: ID Type, File, Shift, Status */}
+          <div className="grid md:grid-cols-4 gap-6 bg-gradient-to-tr from-indigo-50/50 to-blue-50/30 p-6 rounded-2xl border border-indigo-50 shadow-sm">
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-6 bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
   
         {/* ID Type: Defaulted & Fixed */}
         <div>
@@ -278,15 +310,15 @@ export default function Security() {
         </div>
             
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Shift</label>
-              <select {...register("shift")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none bg-white">
+              <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">Shift</label>
+              <select {...register("shift")} className="w-full border-2 p-3 font-semibold text-gray-800 rounded-xl outline-none transition-all shadow-sm bg-white/50 backdrop-blur-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200">
                 <option value="Day">Day</option>
                 <option value="Night">Night</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Status</label>
-              <select {...register("status")} className="w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none bg-white">
+              <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">Status</label>
+              <select {...register("status")} className="w-full border-2 p-3 font-semibold text-gray-800 rounded-xl outline-none transition-all shadow-sm bg-white/50 backdrop-blur-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
@@ -314,12 +346,12 @@ export default function Security() {
           </div>
 
           {/* Form Buttons */}
-          <div className="flex gap-4 pt-6">
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-lg font-bold shadow-lg transition-all">
-              {editingId ? "UPDATE GUARD" : "CONFIRM & SAVE"}
+          <div className="flex justify-end gap-4 pt-6 border-t border-gray-100 mt-8">
+            <button type="button" onClick={closeForm} className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 px-8 py-3 rounded-xl font-bold transition-all shadow-sm">
+              Cancel
             </button>
-            <button type="button" onClick={closeForm} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-10 py-3 rounded-lg font-bold transition-all">
-              CANCEL
+            <button type="submit" className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-10 py-3 rounded-xl font-black shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] transition-all hover:-translate-y-0.5 active:translate-y-0">
+              {editingId ? "Update Guard" : "Save Guard Member"}
             </button>
           </div>
              </form>
@@ -327,47 +359,80 @@ export default function Security() {
                   )}
 
                   {/* TABLE SECTION */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-blue-900 text-white">
-                          <th className="py-4 px-6 text-sm font-semibold uppercase">Guard Info</th>
-                          <th className="py-4 px-6 text-sm font-semibold uppercase">Location</th>
-                          <th className="py-4 px-6 text-sm font-semibold uppercase">Shift & Status</th>
-                          <th className="py-4 px-6 text-sm font-semibold uppercase">ID Details</th>
-                          <th className="py-4 px-6 text-sm font-semibold uppercase text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {filteredGuards.map((g) => (
-                          <tr key={g._id} className="hover:bg-blue-50/50 transition-colors">
-                            <td className="py-4 px-6">
-                              <div className="font-bold text-gray-900">{g.firstName} {g.lastName}</div>
-                              <div className="text-sm text-blue-600 font-medium">{g.mobile}</div>
-                            </td>
-                            <td className="py-4 px-6 text-sm font-medium">
-                              {g.city}, {g.state}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold mr-2 ${g.shift === 'Day' ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600'}`}>
-                                {g.shift}
-                              </span>
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${g.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {g.status}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="text-sm font-bold text-gray-700">{g.idType}</div>
-                              <div className="text-xs text-gray-500">{g.idNumber}</div>
-                            </td>
-                            <td className="py-4 px-6 text-right space-x-2">
-                              <button onClick={() => handleEdit(g)} className="text-blue-600 hover:underline font-bold">Edit</button>
-                              <button onClick={() => handleDelete(g._id)} className="text-red-500 hover:underline font-bold">Delete</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+                    {filteredGuards.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-indigo-50/80 text-indigo-900 font-extrabold uppercase tracking-wider text-[11px] border-b border-indigo-100">
+                            <tr className="whitespace-nowrap">
+                              <th className="py-4 px-6 rounded-tl-3xl">Guard Info</th>
+                              <th className="py-4 px-6">Location</th>
+                              <th className="py-4 px-6">Shift & Status</th>
+                              <th className="py-4 px-6">ID Details</th>
+                              <th className="py-4 px-6 rounded-tr-3xl text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50/50">
+                            {filteredGuards.map((g) => (
+                              <tr key={g._id} className="hover:bg-indigo-50/40 transition-colors group">
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-400 text-white flex items-center justify-center text-sm shadow-md font-bold shrink-0">
+                                      {g.firstName ? g.firstName.charAt(0) : 'G'}{g.lastName ? g.lastName.charAt(0) : ''}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-gray-800 text-sm">{g.firstName} {g.lastName}</div>
+                                      <div className="text-[11px] text-indigo-600 font-bold tracking-wide">{g.mobile}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <span className="text-xs font-bold text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-100 inline-block shadow-sm">
+                                    {g.city}, {g.state}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex flex-col gap-2">
+                                    <span className={`self-start px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${g.shift === 'Day' ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'}`}>
+                                      {g.shift} Shift
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleStatusToggle(g)}
+                                        className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!g.status || g.status === 'active' ? 'bg-green-500' : 'bg-gray-300'}`}
+                                      >
+                                        <span
+                                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!g.status || g.status === 'active' ? 'translate-x-5' : 'translate-x-0'}`}
+                                        />
+                                      </button>
+                                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${!g.status || g.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {!g.status || g.status === 'active' ? 'active' : 'inactive'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="text-xs font-black text-gray-700 uppercase tracking-widest">{g.idProofType || g.idType || 'AADHAAR'}</div>
+                                  <div className="text-[10px] text-gray-500 font-mono mt-1 bg-white px-2 py-0.5 rounded inline-block border border-gray-100 shadow-sm">{g.idNumber || 'Document Uploaded'}</div>
+                                </td>
+                                <td className="py-4 px-6 text-right">
+                                  <div className="flex justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEdit(g)} className="bg-white border border-yellow-100 px-3 py-1.5 text-yellow-600 rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition-all text-xs font-bold shadow-sm">Edit</button>
+                                    <button onClick={() => handleDelete(g._id)} className="bg-white border border-red-100 px-3 py-1.5 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all text-xs font-bold shadow-sm">Delete</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="p-16 text-center">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">🛡️</div>
+                        <h3 className="text-xl font-bold text-gray-800">No Security Staff Found</h3>
+                        <p className="text-gray-500 mt-2">Try adjusting your search or add a new guard.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -377,12 +442,12 @@ export default function Security() {
           function FormInput({ label, type = "text", register, error, placeholder }) {
             return (
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">{label}</label>
+                <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">{label}</label>
                 <input 
                   type={type} 
                   {...register} 
                   placeholder={placeholder}
-                  className={`w-full border p-2.5 rounded-lg focus:border-blue-500 outline-none ${error ? 'border-red-500' : 'border-gray-200'}`} 
+                  className={`w-full border-2 bg-white/50 backdrop-blur-sm p-3 rounded-xl outline-none transition-all shadow-sm font-semibold text-gray-800 placeholder-gray-400 focus:bg-white ${error ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-gray-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200'}`} 
                 />
               </div>
             );
@@ -392,10 +457,10 @@ export default function Security() {
       function Select({ label, register, options, error, required }) {
         return (
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+            <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">{label} {required && <span className="text-red-500">*</span>}</label>
             <select
               {...register}
-              className={`w-full border rounded-lg px-3 py-2 outline-none transition shadow-sm bg-white ${error ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-blue-500"}`}
+              className={`w-full border-2 p-3 font-semibold text-gray-800 rounded-xl outline-none transition-all shadow-sm bg-white/50 backdrop-blur-sm focus:bg-white ${error ? 'border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' : 'border-gray-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 hover:border-gray-200'}`}
             >
               <option value="">Select...</option>
               {options.map((item) => <option key={item} value={item}>{item}</option>)}
