@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Mail, Lock, ArrowRight, Loader } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // useForm setup
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -159,15 +160,22 @@ export default function Login() {
                   <Lock size={18} className={`${errors.password ? 'text-red-400' : 'text-gray-400'}`} />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`w-full pl-11 pr-4 py-3.5 bg-gray-50 border rounded-xl outline-none transition-all font-medium ${
+                  className={`w-full pl-11 pr-12 py-3.5 bg-gray-50 border rounded-xl outline-none transition-all font-medium ${
                     errors.password 
                     ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200' 
                     : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white'
                   }`}
                   {...register("password", { required: "Password is required" })}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
               {errors.password && <p className="text-red-500 text-xs mt-1.5 font-bold flex items-center gap-1"><span className="w-1 h-1 bg-red-500 rounded-full"></span> {errors.password.message}</p>}
             </div>

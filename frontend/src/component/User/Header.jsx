@@ -63,47 +63,55 @@ const Header = () => {
 
   return (
     <>
-      <nav className="flex items-center justify-between px-6 py-4 md:px-12 bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-100 transition-all">
+      <nav className="flex items-center justify-between px-6 py-4 md:px-12 bg-white/70 backdrop-blur-2xl sticky top-0 z-50 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
         
-        {/* LOGO */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">E</div>
-          <span className="text-xl font-black tracking-tighter text-gray-800 uppercase italic">Society</span>
+        {/* PREMIUM LOGO */}
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate("/")}>
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-xl blur shadow-indigo-500/30 group-hover:scale-110 transition-transform"></div>
+            <div className="relative w-full h-full bg-gradient-to-tr from-indigo-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-lg border border-white/20">
+              E
+            </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            <span className="text-xl font-black tracking-tighter text-slate-800 leading-none group-hover:text-indigo-600 transition-colors">Society<span className="text-indigo-600">.OS</span></span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-tight mt-0.5">Management Protocol</span>
+          </div>
         </div>
 
         {isLoggedIn ? (
           <div className="flex items-center gap-4">
-            {/* Role Based Navigation */}
-            <div className="hidden lg:flex items-center gap-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+            {/* Transparent Glass Navigation */}
+            <div className="hidden lg:flex items-center gap-1 p-1.5 bg-slate-100/50 rounded-2xl border border-slate-200/50 backdrop-blur-md">
               {isAdmin && (
                 <>
-                  <Link to="/admin/dashboard" className="flex items-center gap-2 hover:text-blue-600"><LayoutDashboard size={14} /> Overview</Link>
-                  <Link to="/admin/expense" className="flex items-center gap-2 hover:text-blue-600"><CreditCard size={14} /> Expenses</Link>
+                  <Link to="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all uppercase tracking-widest shadow-sm"><LayoutDashboard size={14} /> Dashboard</Link>
+                  <Link to="/admin/expense" className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all uppercase tracking-widest"><CreditCard size={14} /> Expenses</Link>
                 </>
               )}
-              {isSecurity && <Link to="/security/dashboard" className="flex items-center gap-2 hover:text-blue-600"><ShieldCheck size={14} /> Guard Desk</Link>}
+              {isSecurity && <Link to="/security/dashboard" className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all uppercase tracking-widest shadow-sm"><ShieldCheck size={14} /> Guard Desk</Link>}
               {isUser && (
                 <>
-                  <Link to="/user" className="flex items-center gap-2 hover:text-blue-600"><Home size={14} /> My Dashboard</Link>
-                  <Link to="/user/facilities" className="flex items-center gap-2 hover:text-blue-600"><CreditCard size={14} /> Amenities</Link>
+                  <Link to="/user" className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all uppercase tracking-widest shadow-sm"><Home size={14} /> My Dashboard</Link>
+                  <Link to="/user/facilities" className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-slate-600 hover:text-indigo-600 hover:bg-white rounded-xl transition-all uppercase tracking-widest"><CreditCard size={14} /> Amenities</Link>
                 </>
               )}
             </div>
 
-            {/* Profile Capsule + Dropdown */}
+            {/* Premium Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown((prev) => !prev)}
-                className="flex items-center gap-3 bg-gray-50 p-1 pr-3 rounded-full border border-gray-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-all"
+                className="flex items-center gap-3 bg-white pl-2 pr-4 py-1.5 rounded-full border border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] cursor-pointer hover:border-indigo-300 hover:shadow-[0_4px_15px_rgba(79,70,229,0.1)] transition-all group"
               >
-                <img src={userData.profilePic} alt="User" className="w-8 h-8 rounded-full border border-white object-cover" />
+                <img src={userData.profilePic} alt="User" className="w-8 h-8 rounded-full border-2 border-indigo-100 object-cover group-hover:scale-105 transition-transform" />
                 <div className="hidden sm:block text-left">
-                  <p className="text-[11px] font-bold text-gray-800">{userData.name}</p>
-                  <p className="text-[9px] text-blue-600 font-bold mt-0.5">{userData.subText}</p>
+                  <p className="text-[11px] font-black text-slate-800 uppercase tracking-wider">{userData.name}</p>
+                  <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{userData.subText}</p>
                 </div>
                 <ChevronDown
                   size={14}
-                  className={`text-gray-400 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
+                  className={`text-slate-400 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -155,8 +163,8 @@ const Header = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/login")} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-pink-600 text-white shadow-lg flex items-center gap-2">Login</button>
+          <div className="flex items-center gap-4 z-50 relative">
+            <button onClick={() => navigate("/login")} className="px-8 py-2.5 rounded-2xl font-black text-sm bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-[0_4px_14px_rgba(79,70,229,0.4)] flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,70,229,0.3)] transition-all active:translate-y-0 text-[13px] tracking-wide uppercase">Login <FaArrowRight size={12} /></button>
           </div>
         )}
       </nav>
