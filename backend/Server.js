@@ -19,6 +19,7 @@ const totalExpense = require("./src/Route/TotalExpenseRoute");
 const facility = require("./src/Route/FacilityRoute");
 const flat = require("./src/Route/FlatRoute");
 const maintenance = require("./src/Route/MaintenanceRoute");
+const payment     = require("./src/Route/PaymentRoute");
 
 /* DATABASE */
 
@@ -44,6 +45,7 @@ app.use("/api/totalExpense", totalExpense);
 app.use("/api/facilities", facility);
 app.use("/api/flats", flat);
 app.use("/api/maintenance", maintenance);
+app.use("/api/payment",     payment);
 
 /* TEST */
 

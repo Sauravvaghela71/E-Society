@@ -34,11 +34,19 @@ const maintenanceSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ["Online", "Cash", "Cheque", null],
+        enum: ["Online", "Cash", "Cheque", "Razorpay", null],
         default: null
     },
     paidAt: {
         type: Date,
+        default: null
+    },
+    razorpayOrderId: {
+        type: String,
+        default: null
+    },
+    razorpayPaymentId: {
+        type: String,
         default: null
     }
 }, { timestamps: true });
