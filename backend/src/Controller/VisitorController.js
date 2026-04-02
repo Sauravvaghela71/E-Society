@@ -128,12 +128,35 @@ exports.deleteVisitorLog = async (req, res) => {
     }
 };
 
-// 6. Get Visitors for a specific resident (userId)
+// 6. Get Visitors for a specific resident
+//    Returns both:
+//      a) visitors where visitingResident === residentId (guard picked from dropdown)
+//      b) visitors matching the resident's blockWing + flatNumber (guard typed manually)
 exports.getResidentVisitors = async (req, res) => {
     try {
-        const visitors = await Visitor.find({ visitingResident: req.params.residentId }).sort({ entryTime: -1 });
+        const { residentId } = req.params;
+
+        // Look up the resident to get wing + flatNumber for the fallback match
+        const resident = await Resident.findById(residentId).lean();
+
+        let query;
+        if (resident) {
+            query = {
+                $or: [
+                    { visitingResident: residentId },
+                    {
+                        blockWing : { $regex: new RegExp(`^${resident.wing}$`, "i") },
+                        flatNumber: String(resident.flatNumber)
+                    }
+                ]
+            };
+        } else {
+            query = { visitingResident: residentId };
+        }
+
+        const visitors = await Visitor.find(query).sort({ entryTime: -1 });
         res.status(200).json({ success: true, count: visitors.length, data: visitors });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
-};
+};
