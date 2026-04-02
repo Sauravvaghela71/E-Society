@@ -2,49 +2,92 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Loader, Wallet, CreditCard, Receipt, Building,
-  CheckCircle, Clock, Download
+  CheckCircle, Clock, Download, UserCircle, AlertCircle
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import RazorpayPayment from "../Admin/Maintaince/Payment";
 
-const API_URL = "http://localhost:5100/api/maintenance";
+const API_URL       = "http://localhost:5100/api/maintenance";
+const RESIDENT_API  = "http://localhost:5100/api/residents";
 
-const getCurrentUser = () => {
-  try { return JSON.parse(localStorage.getItem("user") || "{}"); }
+/* ── Resolve session user ── */
+const getSessionUser = () => {
+  try { return JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}"); }
   catch { return {}; }
 };
 
 export default function UserMaintenance() {
-  const [bills, setBills]   = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bills, setBills]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [residentId, setResidentId] = useState(null);
+  const [residentInfo, setResidentInfo] = useState(null);
+  const [error, setError]       = useState(null);
 
+  /* Step 1 – resolve the resident's Mongo _id */
+  useEffect(() => {
+    const resolve = async () => {
+      const user = getSessionUser();
+      const email = user.email;
+      const profileId = user.profileid || user._id;
+
+      let resident = null;
+
+      // Primary: look up by email
+      if (email) {
+        try {
+          const r = await axios.get(`${RESIDENT_API}/by-email/${encodeURIComponent(email)}`);
+          if (r.data?._id) resident = r.data;
+        } catch { /* not found */ }
+      }
+
+      // Fallback: look up by profileId
+      if (!resident && profileId) {
+        try {
+          const r = await axios.get(`${RESIDENT_API}/${profileId}`);
+          if (r.data?._id) resident = r.data;
+        } catch { /* not found */ }
+      }
+
+      if (resident) {
+        setResidentId(resident._id);
+        setResidentInfo(resident);
+      } else {
+        setError("Could not find your resident profile. Please contact the admin.");
+        setLoading(false);
+      }
+    };
+    resolve();
+  }, []);
+
+  /* Step 2 – fetch bills once we have a resident ID */
   const fetchBills = async () => {
+    if (!residentId) return;
     try {
       setLoading(true);
-      const res = await axios.get(API_URL);
+      const res = await axios.get(`${API_URL}/user/${residentId}`);
       setBills(res.data.data || []);
     } catch (err) {
       console.error(err);
+      setError("Failed to load your maintenance bills.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchBills(); }, []);
+  useEffect(() => { fetchBills(); }, [residentId]);
 
-  const handlePaymentSuccess = (updatedBill) => {
-    fetchBills(); // refresh list from server
-  };
+  const handlePaymentSuccess = () => fetchBills();
 
+  /* PDF generation */
   const handleDownloadPDF = (bill) => {
     try {
       const doc = new jsPDF();
-      const currentUser = getCurrentUser();
-      const residentName = bill.residentId?.firstName
-        ? `${bill.residentId.firstName} ${bill.residentId.lastName || ""}`
-        : `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || "Resident";
-      const residentMobile = bill.residentId?.mobileNumber || currentUser.mobileNumber || "N/A";
+      const info = residentInfo;
+      const residentName = info
+        ? `${info.firstName} ${info.lastName || ""}`.trim()
+        : "Resident";
+      const residentMobile = info?.mobileNumber || "N/A";
       const safeDetails    = (bill.details || "N/A").replace(/₹/g, "Rs. ");
 
       doc.setFontSize(22); doc.setTextColor(40, 40, 40);
@@ -56,15 +99,16 @@ export default function UserMaintenance() {
       doc.text("Billed To:", 14, 50);
       doc.setFontSize(12); doc.setTextColor(80, 80, 80);
       doc.text(residentName, 14, 58);
-      doc.text(`Mobile: ${residentMobile}`, 14, 64);
+      doc.text(`Wing ${info?.wing || ""} – Flat ${info?.flatNumber || ""}`, 14, 64);
+      doc.text(`Mobile: ${residentMobile}`, 14, 70);
       autoTable(doc, {
-        startY: 75,
-        head: [["Description", "Details", "Due Date", "Amount"]],
-        body: [[bill.billName, safeDetails, new Date(bill.dueDate).toLocaleDateString(), `Rs. ${bill.amount.toLocaleString()}`]],
-        theme: "grid",
-        headStyles: { fillColor: [63, 81, 181] }
+        startY: 80,
+        head  : [["Description", "Details", "Due Date", "Amount"]],
+        body  : [[bill.billName, safeDetails, new Date(bill.dueDate).toLocaleDateString(), `Rs. ${bill.amount.toLocaleString()}`]],
+        theme : "grid",
+        headStyles: { fillColor: [63, 81, 181] },
       });
-      const finalY = doc.lastAutoTable?.finalY || 100;
+      const finalY = doc.lastAutoTable?.finalY || 105;
       doc.setFontSize(14); doc.setTextColor(0, 0, 0);
       doc.text(`Total: Rs. ${bill.amount.toLocaleString()}`, 14, finalY + 15);
       doc.setTextColor(bill.status === "Paid" ? 34 : 220, bill.status === "Paid" ? 139 : 53, bill.status === "Paid" ? 34 : 69);
@@ -76,13 +120,30 @@ export default function UserMaintenance() {
       doc.setFontSize(10); doc.setTextColor(150, 150, 150);
       doc.text("Electronically generated invoice — E-Society", 105, 280, { align: "center" });
       doc.save(`Invoice_${bill.billName.replace(/\s+/g, "_")}.pdf`);
-    } catch (error) {
-      console.error("PDF Error:", error);
+    } catch (err) {
+      console.error("PDF Error:", err);
       alert("Failed to generate PDF.");
     }
   };
 
-  if (loading) return <div className="p-8"><Loader className="animate-spin text-blue-500" /></div>;
+  /* ── Loading / Error screens ── */
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center min-h-[40vh]">
+      <div className="flex flex-col items-center gap-3">
+        <Loader className="animate-spin text-indigo-500" size={36} />
+        <p className="text-gray-500 font-semibold">Loading your maintenance bills…</p>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8 flex items-center justify-center min-h-[40vh]">
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-md">
+        <AlertCircle size={40} className="text-red-400 mx-auto mb-3" />
+        <h3 className="font-bold text-red-800 text-lg">{error}</h3>
+      </div>
+    </div>
+  );
 
   const totalPending = bills.filter(b => b.status === "Pending").reduce((s, b) => s + b.amount, 0);
   const totalPaid    = bills.filter(b => b.status === "Paid").reduce((s, b) => s + b.amount, 0);
@@ -98,8 +159,13 @@ export default function UserMaintenance() {
               <Wallet size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-800">My Dues & Maintenance</h1>
-              <p className="text-gray-500 text-sm mt-1">Society invoices, penalties &amp; online payments.</p>
+              <h1 className="text-2xl font-black text-gray-800">My Dues &amp; Maintenance</h1>
+              {residentInfo && (
+                <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-1.5">
+                  <UserCircle size={14} />
+                  {residentInfo.firstName} {residentInfo.lastName} · Wing {residentInfo.wing}, Flat {residentInfo.flatNumber}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex gap-4">
@@ -153,15 +219,16 @@ export default function UserMaintenance() {
                     </div>
                     {pending ? (
                       <div className="flex flex-col gap-2">
+                        {/* Multi-method payment button */}
                         <RazorpayPayment bill={b} onSuccess={handlePaymentSuccess}>
                           {({ openRazorpay, loading: rzpLoading }) => (
                             <button
                               onClick={openRazorpay}
                               disabled={rzpLoading}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider disabled:opacity-60"
+                              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider disabled:opacity-60"
                             >
                               {rzpLoading ? <Loader size={18} className="animate-spin" /> : <CreditCard size={18} />}
-                              {rzpLoading ? "Opening Razorpay…" : "Pay Online via Razorpay"}
+                              {rzpLoading ? "Opening Payment…" : "Pay Online"}
                             </button>
                           )}
                         </RazorpayPayment>
@@ -171,9 +238,9 @@ export default function UserMaintenance() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2">
-                        <button className="w-full bg-gray-50 text-gray-400 font-black py-3 rounded-xl border-2 border-gray-100 flex items-center justify-center gap-2 cursor-not-allowed text-sm">
-                          <Building size={16} /> Receipt Generated
-                        </button>
+                        <div className="w-full bg-gray-50 text-gray-400 font-black py-3 rounded-xl border-2 border-gray-100 flex items-center justify-center gap-2 text-sm">
+                          <Building size={16} /> Receipt Generated · {b.paymentMethod || "Online"}
+                        </div>
                         <button onClick={() => handleDownloadPDF(b)} className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
                           <Download size={18} /> Download Receipt PDF
                         </button>
@@ -225,6 +292,7 @@ export default function UserMaintenance() {
             </table>
           </div>
         </div>
+
       </div>
     </div>
   );
