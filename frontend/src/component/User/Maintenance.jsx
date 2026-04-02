@@ -83,42 +83,148 @@ export default function UserMaintenance() {
   const handleDownloadPDF = (bill) => {
     try {
       const doc = new jsPDF();
-      const info = residentInfo;
-      const residentName = info
-        ? `${info.firstName} ${info.lastName || ""}`.trim()
-        : "Resident";
-      const residentMobile = info?.mobileNumber || "N/A";
-      const safeDetails    = (bill.details || "N/A").replace(/₹/g, "Rs. ");
+      
+      // Constants
+      const info = residentInfo || {};
+      const residentName = `${info.firstName || ""} ${info.lastName || ""}`.trim() || "Resident";
+      const residentMobile = info.mobileNumber || "N/A";
+      const residentEmail = info.email || "N/A";
+      const wingFlat = `Wing ${info.wing || ""} - Flat ${info.flatNumber || ""}`;
+      
+      // Brand Colors
+      const primaryColor = [79, 70, 229]; // Indigo 600
+      const grayDark = [55, 65, 81];
+      const grayLight = [107, 114, 128];
+      
+      // 1. Header Banner
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(0, 0, 210, 35, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("INVOICE", 14, 23);
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text("E-Society", 196, 23, { align: "right" });
+      
+      // 2. Invoice Meta Info
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Invoice No:", 14, 50);
+      doc.text("Generated:", 14, 57);
+      doc.text("Due Date:", 14, 64);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(grayLight[0], grayLight[1], grayLight[2]);
+      doc.text(bill._id.slice(-8).toUpperCase(), 45, 50);
+      doc.text(new Date().toLocaleDateString("en-IN"), 45, 57);
+      doc.text(new Date(bill.dueDate).toLocaleDateString("en-IN"), 45, 64);
+      
+      // 3. Billing Addresses
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      doc.text("Billed To:", 14, 85);
+      doc.text("From:", 120, 85);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(grayLight[0], grayLight[1], grayLight[2]);
+      // To
+      doc.text(residentName, 14, 92);
+      doc.text(wingFlat, 14, 99);
+      doc.text(`Mobile: ${residentMobile}`, 14, 106);
+      if(residentEmail !== "N/A") doc.text(`Email: ${residentEmail}`, 14, 113);
+      
+      // From
+      doc.text("E-Society Management", 120, 92);
+      doc.text("Society Main Admin Office", 120, 99);
+      doc.text("contact@e-society.com", 120, 106);
 
-      doc.setFontSize(22); doc.setTextColor(40, 40, 40);
-      doc.text("SOCIETY MAINTENANCE INVOICE", 105, 20, { align: "center" });
-      doc.setFontSize(12); doc.setTextColor(100, 100, 100);
-      doc.text(`Bill ID: ${bill._id}`, 14, 30);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 36);
-      doc.setFontSize(14); doc.setTextColor(0, 0, 0);
-      doc.text("Billed To:", 14, 50);
-      doc.setFontSize(12); doc.setTextColor(80, 80, 80);
-      doc.text(residentName, 14, 58);
-      doc.text(`Wing ${info?.wing || ""} – Flat ${info?.flatNumber || ""}`, 14, 64);
-      doc.text(`Mobile: ${residentMobile}`, 14, 70);
-      autoTable(doc, {
-        startY: 80,
-        head  : [["Description", "Details", "Due Date", "Amount"]],
-        body  : [[bill.billName, safeDetails, new Date(bill.dueDate).toLocaleDateString(), `Rs. ${bill.amount.toLocaleString()}`]],
-        theme : "grid",
-        headStyles: { fillColor: [63, 81, 181] },
-      });
-      const finalY = doc.lastAutoTable?.finalY || 105;
-      doc.setFontSize(14); doc.setTextColor(0, 0, 0);
-      doc.text(`Total: Rs. ${bill.amount.toLocaleString()}`, 14, finalY + 15);
-      doc.setTextColor(bill.status === "Paid" ? 34 : 220, bill.status === "Paid" ? 139 : 53, bill.status === "Paid" ? 34 : 69);
-      doc.text(`Status: ${bill.status.toUpperCase()}`, 14, finalY + 23);
-      if (bill.status === "Paid") {
-        doc.text(`Paid On: ${new Date(bill.paidAt).toLocaleDateString()}`, 14, finalY + 31);
-        if (bill.paymentMethod) doc.text(`Method: ${bill.paymentMethod}`, 14, finalY + 39);
+      // Parse details to create items table
+      // e.g. "Water: ₹600, Parking: ₹400, Maintenance: ₹1000"
+      let parsedItems = [];
+      const billTotalFormatted = `Rs. ${bill.amount.toLocaleString("en-IN")}`;
+      if (bill.details && bill.details.includes(",")) {
+         parsedItems = bill.details.split(",").map(item => {
+             const [desc, amt] = item.split(":");
+             return [desc.trim(), "", "", amt ? amt.replace(/₹/g, "Rs. ").trim() : ""];
+         });
+      } else {
+         const safeDetails = (bill.details || "").replace(/₹/g, "Rs. ");
+         parsedItems = [[bill.billName, safeDetails, "", billTotalFormatted]];
       }
-      doc.setFontSize(10); doc.setTextColor(150, 150, 150);
-      doc.text("Electronically generated invoice — E-Society", 105, 280, { align: "center" });
+
+      // 4. Line Items Table
+      autoTable(doc, {
+        startY: 130,
+        head: [["Description", "HSN/SAC", "Quantity", "Amount"]],
+        body: parsedItems,
+        theme: "striped",
+        headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 10, cellPadding: 6, textColor: grayDark },
+        columnStyles: {
+            0: { cellWidth: 90 },
+            3: { halign: "right" }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 135;
+      
+      // 5. Totals
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      doc.text("Subtotal:", 140, finalY + 15);
+      doc.text("Total:", 140, finalY + 25);
+      
+      doc.setFont("helvetica", "normal");
+      doc.text(billTotalFormatted, 196, finalY + 15, { align: "right" });
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(billTotalFormatted, 196, finalY + 25, { align: "right" });
+      
+      // 6. Payment Status Box
+      doc.setFillColor(249, 250, 251); // Gray 50
+      doc.setDrawColor(229, 231, 235); // Gray 200
+      doc.roundedRect(14, finalY + 10, 100, 45, 3, 3, "FD");
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2]);
+      doc.text("Payment Status", 19, finalY + 18);
+      
+      doc.setFont("helvetica", "normal");
+      if (bill.status === "Paid") {
+          doc.setTextColor(5, 150, 105); // Green 600
+          doc.setFont("helvetica", "bold");
+          doc.text("PAID", 19, finalY + 26);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(grayLight[0], grayLight[1], grayLight[2]);
+          doc.text(`Method: ${bill.paymentMethod || "Online"}`, 19, finalY + 34);
+          doc.text(`Paid On: ${new Date(bill.paidAt).toLocaleDateString("en-IN")}`, 19, finalY + 41);
+          if (bill.razorpayPaymentId) {
+             doc.setFontSize(8);
+             doc.text(`Txn ID: ${bill.razorpayPaymentId}`, 19, finalY + 49);
+          }
+      } else {
+          doc.setTextColor(220, 38, 38); // Red 600
+          doc.setFont("helvetica", "bold");
+          doc.text("PENDING", 19, finalY + 26);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(grayLight[0], grayLight[1], grayLight[2]);
+          doc.text(`Due: ${new Date(bill.dueDate).toLocaleDateString("en-IN")}`, 19, finalY + 34);
+      }
+      
+      // 7. Footer
+      doc.setFontSize(10);
+      doc.setTextColor(grayLight[0], grayLight[1], grayLight[2]);
+      doc.text("Thank you for your prompt payment!", 105, 275, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("Electronically generated invoice — E-Society", 105, 282, { align: "center" });
+      
       doc.save(`Invoice_${bill.billName.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
       console.error("PDF Error:", err);
@@ -219,7 +325,6 @@ export default function UserMaintenance() {
                     </div>
                     {pending ? (
                       <div className="flex flex-col gap-2">
-                        {/* Multi-method payment button */}
                         <RazorpayPayment bill={b} onSuccess={handlePaymentSuccess}>
                           {({ openRazorpay, loading: rzpLoading }) => (
                             <button
@@ -228,7 +333,7 @@ export default function UserMaintenance() {
                               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider disabled:opacity-60"
                             >
                               {rzpLoading ? <Loader size={18} className="animate-spin" /> : <CreditCard size={18} />}
-                              {rzpLoading ? "Opening Payment…" : "Pay Online"}
+                              {rzpLoading ? "Opening Razorpay…" : "Pay via Razorpay"}
                             </button>
                           )}
                         </RazorpayPayment>
