@@ -3,10 +3,20 @@ const crypto      = require("crypto");
 const Maintenance = require("../Model/MaintenanceModel");
 const mailSend    = require("../Util/MailSend");
 
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error("⚠️  Razorpay keys are missing! Make sure .env is loaded and RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET are set.");
+}
+
 const razorpay = new Razorpay({
     key_id    : process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
+
+// GET /api/payment/get-key
+// Returns the Razorpay publishable key to the frontend
+exports.getKey = (req, res) => {
+    res.status(200).json({ success: true, key: process.env.RAZORPAY_KEY_ID });
+};
 
 // POST /api/payment/create-order
 // Body: { billId, amount }  (amount in INR — we convert to paise)
