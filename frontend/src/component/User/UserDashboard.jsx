@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
   User, Bell, ShieldCheck, MessageCircle,
-  Calendar, CreditCard, Clock, Activity, Wallet
+  Calendar, CreditCard, Clock, Activity, Wallet, AlertCircle
 } from "lucide-react";
 
 export default function UserDashboard() {
@@ -15,6 +15,7 @@ export default function UserDashboard() {
   const [myBookings, setMyBookings] = useState([]);
   const [myVisitors, setMyVisitors] = useState([]);
   const [myComplaints, setMyComplaints] = useState([]);
+  const [myBills, setMyBills] = useState([]);
   const [showAllNotices, setShowAllNotices] = useState(false);
 
   // Get current user details from local storage
@@ -83,13 +84,16 @@ export default function UserDashboard() {
         const resolvedProfileId = residentData?._id || profileId;
 
         // ── Step 2: Fetch rest of dashboard data concurrently ──
-        const [noticeRes, bookingRes, visitorRes, complaintRes] = await Promise.allSettled([
+        const [noticeRes, bookingRes, visitorRes, complaintRes, billRes] = await Promise.allSettled([
           axios.get("http://localhost:5100/api/notice"),
           axios.get("http://localhost:5100/api/facilities/bookings"),
           residentData?._id
             ? axios.get(`http://localhost:5100/api/visitor/resident/${residentData._id}`)
             : axios.get("http://localhost:5100/api/visitor"),
           axios.get("http://localhost:5100/api/complaint"),
+          residentData?._id
+            ? axios.get(`http://localhost:5100/api/maintenance/user/${residentData._id}`)
+            : Promise.reject("no resident"),
         ]);
 
         // Process Notices (All)
@@ -116,6 +120,12 @@ export default function UserDashboard() {
           const allComplaints = Array.isArray(complaintRes.value.data) ? complaintRes.value.data : complaintRes.value.data?.data || [];
           setMyComplaints(allComplaints.filter(c => c.complainer?._id === resolvedProfileId || c.complainer === resolvedProfileId).slice(0, 3));
         }
+
+        // Process Maintenance Bills
+        if (billRes.status === "fulfilled") {
+          const allBills = Array.isArray(billRes.value.data) ? billRes.value.data : billRes.value.data?.data || [];
+          setMyBills(allBills);
+        }
         setLoading(false)
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -137,13 +147,16 @@ export default function UserDashboard() {
   //   );
   // }
 
+  const pendingBills = myBills.filter(b => b.status === "Pending");
+  const pendingAmount = pendingBills.reduce((s, b) => s + b.amount, 0);
+
   // Generate Quick Links dynamically
   const features = [
     { title: "My Profile", icon: <User size={24} />, path: "/user/profile", color: "text-blue-600 bg-blue-50", count: null },
     { title: "Amenities", icon: <Calendar size={24} />, path: "/user/facilities", color: "text-green-600 bg-green-50", count: myBookings.length },
     { title: "My Complaints", icon: <MessageCircle size={24} />, path: "/user/complaint", color: "text-orange-600 bg-orange-50", count: myComplaints.length },
     { title: "Visitor Logs", icon: <ShieldCheck size={24} />, path: "/user/visitor", color: "text-indigo-600 bg-indigo-50", count: myVisitors.length },
-    { title: "Maintenance Bills", icon: <Wallet size={24} />, path: "/user/maintenance", color: "text-emerald-600 bg-emerald-50", count: null }
+    { title: "Maintenance Bills", icon: <Wallet size={24} />, path: "/user/maintenance", color: "text-emerald-600 bg-emerald-50", count: myBills.length }
   ];
 
   return (
@@ -278,6 +291,25 @@ export default function UserDashboard() {
           </div>
 
         </div>
+
+        {/* Pending Dues Banner */}
+        {pendingBills.length > 0 && (
+          <Link to="/user/maintenance" className="block bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-500/20 hover:-translate-y-1 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
+                  <AlertCircle size={22} />
+                </div>
+                <div>
+                  <p className="font-black text-lg leading-tight">{pendingBills.length} Pending Maintenance Bill{pendingBills.length > 1 ? 's' : ''}</p>
+                  <p className="text-orange-100 text-sm font-semibold">Total due: ₹{pendingAmount.toLocaleString()} · Click to pay now</p>
+                </div>
+              </div>
+              <CreditCard size={28} className="opacity-70" />
+            </div>
+          </Link>
+        )}
+
       </div>
     </div>
   );
