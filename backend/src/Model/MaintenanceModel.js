@@ -48,6 +48,15 @@ const maintenanceSchema = new mongoose.Schema({
     razorpayPaymentId: {
         type: String,
         default: null
+    },
+    // Email tracking — prevents duplicate notifications
+    billEmailSentAt: {
+        type: Date,
+        default: null   // set when the "new bill" email is sent on generation
+    },
+    overdueEmailSentAt: {
+        type: Date,
+        default: null   // set when the "overdue reminder" email is sent
     }
 }, { timestamps: true });
 

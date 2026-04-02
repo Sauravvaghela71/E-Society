@@ -22,6 +22,11 @@ const flat = require("./src/Route/FlatRoute");
 const maintenance = require("./src/Route/MaintenanceRoute");
 const payment     = require("./src/Route/PaymentRoute");
 
+/* SCHEDULED JOBS */
+const cron        = require("node-cron");
+const { checkOverdueBillsAndNotify } = require("./src/Controller/MaintenanceController");
+
+
 /* DATABASE */
 
 Database();
@@ -60,4 +65,14 @@ const PORT = 5100;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // ── Daily overdue bill check at 08:00 AM every day ──
+  // Cron: "0 8 * * *"  → minute=0, hour=8, every day
+  cron.schedule("0 8 * * *", () => {
+    console.log("[Cron] Running daily overdue maintenance bill check…");
+    checkOverdueBillsAndNotify();
+  }, { timezone: "Asia/Kolkata" });
+
+  // Also run once on startup to catch any bills that went overdue while server was offline
+  checkOverdueBillsAndNotify();
 });
