@@ -164,6 +164,45 @@ const Header = () => {
           </div>
         ) : (
           <div className="flex items-center gap-4 z-50 relative">
+            {/* Public Navigation */}
+            <div className="hidden md:flex items-center gap-8 mr-4">
+              <button 
+                onClick={() => {
+                  if (window.location.pathname !== "/") navigate("/");
+                  else {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }} 
+                className="text-[13px] font-black text-slate-600 hover:text-indigo-600 transition-all uppercase tracking-widest hover:-translate-y-0.5"
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => {
+                  if (window.location.pathname !== "/") navigate("/#features");
+                  else {
+                    const el = document.getElementById("features");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }} 
+                className="text-[13px] font-black text-slate-600 hover:text-indigo-600 transition-all uppercase tracking-widest hover:-translate-y-0.5"
+              >
+                Features
+              </button>
+              <button 
+                onClick={() => {
+                  if (window.location.pathname !== "/") navigate("/#contact");
+                  else {
+                    const el = document.getElementById("contact");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }} 
+                className="text-[13px] font-black text-slate-600 hover:text-indigo-600 transition-all uppercase tracking-widest hover:-translate-y-0.5"
+              >
+                Contact Us
+              </button>
+            </div>
+            
             <button onClick={() => navigate("/login")} className="px-8 py-2.5 rounded-2xl font-black text-sm bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-[0_4px_14px_rgba(79,70,229,0.4)] flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,70,229,0.3)] transition-all active:translate-y-0 text-[13px] tracking-wide uppercase">Login <FaArrowRight size={12} /></button>
           </div>
         )}

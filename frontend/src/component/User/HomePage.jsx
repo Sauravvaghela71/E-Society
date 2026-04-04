@@ -1,5 +1,5 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ShieldCheck,
   ReceiptText,
@@ -9,13 +9,28 @@ import {
   BellRing,
   UsersRound,
   CalendarCheck,
-  Building2
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Send
 } from "lucide-react";
 import Header from "./Header";
 import Footer from "./Footer";
 
 export default function HomePage({ showHeader = true, showFooter = true }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [location]);
 
   const scrollToId = (id) => {
     const el = document.getElementById(id);
@@ -243,6 +258,94 @@ export default function HomePage({ showHeader = true, showFooter = true }) {
                   >
                     Review Software
                   </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* --- CONTACT SECTION --- */}
+          <section id="contact" className="py-24 px-6 md:px-12 bg-gray-50/50 border-t border-gray-100">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-16 text-center max-w-3xl mx-auto">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-100/50 text-indigo-700 text-[10px] font-black uppercase tracking-widest mb-6 border border-indigo-200/50">
+                  <Mail size={14} /> Get In Touch
+                </div>
+                <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-6">
+                  Contact Support.
+                </h2>
+                <p className="text-gray-500 font-medium text-lg leading-relaxed">
+                  Have a question or need access for your society? Reach out and our team will get you onboarded immediately.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto items-center">
+                
+                {/* Contact Features Side */}
+                <div className="space-y-8">
+                  <div className="flex items-start gap-4 group">
+                    <div className="w-14 h-14 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                      <Mail size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-1">Email Us</h4>
+                      <p className="text-gray-500 mb-2 font-medium">Drop us a line for any inquiries.</p>
+                      <a href="mailto:support@esociety.com" className="text-indigo-600 font-black hover:text-indigo-700">support@esociety.com</a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 group">
+                    <div className="w-14 h-14 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
+                      <Phone size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-1">Call Us</h4>
+                      <p className="text-gray-500 mb-2 font-medium">Mon-Fri from 9am to 6pm.</p>
+                      <span className="text-rose-600 font-black">+1 (555) 000-0000</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 group">
+                    <div className="w-14 h-14 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                      <MapPin size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900 mb-1">Visit Us</h4>
+                      <p className="text-gray-500 mb-2 font-medium">Come say hello at our HQ.</p>
+                      <span className="text-emerald-600 font-black">100 Innovation Drive, Tech City</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Glassmorphism Form Area */}
+                <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-indigo-100/50 transition-colors pointer-events-none"></div>
+                  
+                  <form className="relative z-10 flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-black text-slate-800 uppercase tracking-wider">First Name</label>
+                        <input type="text" placeholder="John" className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all text-sm font-medium" />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-black text-slate-800 uppercase tracking-wider">Last Name</label>
+                        <input type="text" placeholder="Doe" className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all text-sm font-medium" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-black text-slate-800 uppercase tracking-wider">Email Address</label>
+                      <input type="email" placeholder="john@example.com" className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all text-sm font-medium" />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-black text-slate-800 uppercase tracking-wider">Message</label>
+                      <textarea rows="4" placeholder="How can we help?" className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all text-sm font-medium resize-none"></textarea>
+                    </div>
+
+                    <button className="mt-2 px-6 py-4 bg-gray-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10 active:scale-[0.98]">
+                      Send Message <Send size={16} />
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>
