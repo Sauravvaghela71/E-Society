@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { 
   Users, UserCheck, MessageCircle, CalendarDays, 
-  Wrench, ShieldAlert, BellRing, IndianRupee, Flame, 
+  Wrench, ShieldAlert, BellRing, IndianRupee,
   ChevronRight, Activity, CalendarClock, Wallet, Building2, Home
 } from "lucide-react";
 
@@ -19,8 +19,6 @@ const Dashboard = () => {
     security: 0,
     notice: 0,
     expense: 0,
-    emergency: 0,
-    totalExpense: 0,
     society: 0,
     flats: 0
   });
@@ -45,7 +43,6 @@ const Dashboard = () => {
           resExpense,
           resFacilities,
           resMaintenance,
-          resTotalExpense,
           resSociety,
           resFlats
         ] = await Promise.allSettled([
@@ -57,7 +54,6 @@ const Dashboard = () => {
           axios.get(`${API}/expense`),
           axios.get(`${API}/facilities/bookings`),
           axios.get(`${API}/maintenance`),
-          axios.get(`${API}/totalExpense/all`),
           axios.get(`${API}/society`),
           axios.get(`${API}/flats`)
         ]);
@@ -93,8 +89,6 @@ const Dashboard = () => {
           security: safeGetCount(resSecurity),
           notice: safeGetCount(resNotice),
           expense: safeGetCount(resExpense),
-          emergency: 0,
-          totalExpense: safeGetCount(resTotalExpense),
           society: safeGetCount(resSociety),
           flats: safeGetCount(resFlats)
         });
@@ -120,10 +114,8 @@ const Dashboard = () => {
     { name: "Security Staff", count: counts.security, path: "/admin/security", icon: <ShieldAlert size={24}/>, color: "text-indigo-600 bg-indigo-50 border-indigo-100" },
     { name: "Notices", count: counts.notice, path: "/admin/notice", icon: <BellRing size={24}/>, color: "text-pink-600 bg-pink-50 border-pink-100" },
     { name: "Expenses", count: counts.expense, path: "/admin/expense", icon: <IndianRupee size={24}/>, color: "text-teal-600 bg-teal-50 border-teal-100" },
-    { name: "Total Expense", count: counts.totalExpense, path: "/admin/totalExpense", icon: <Wallet size={24}/>, color: "text-cyan-600 bg-cyan-50 border-cyan-100" },
     { name: "Society Info", count: counts.society, path: "/admin/society", icon: <Building2 size={24}/>, color: "text-sky-600 bg-sky-50 border-sky-100" },
-    { name: "Flat Details", count: counts.flats, path: "/admin/flatdetails", icon: <Home size={24}/>, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
-    { name: "Emergencies", count: counts.emergency, path: "/admin/emergency", icon: <Flame size={24}/>, color: "text-red-600 bg-red-50 border-red-100" }
+    { name: "Flat Details", count: counts.flats, path: "/admin/flatdetails", icon: <Home size={24}/>, color: "text-emerald-600 bg-emerald-50 border-emerald-100" }
   ];
 
   if (loading) {

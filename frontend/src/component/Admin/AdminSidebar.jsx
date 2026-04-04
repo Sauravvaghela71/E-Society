@@ -103,12 +103,7 @@ export default function AdminSidebar() {
               label="Add Expense" 
               active={isActive("/admin/expense")} 
             />
-            <SidebarLink 
-              to="/admin/totalExpense" 
-              icon={<FaWallet />} 
-              label="Total Expense" 
-              active={isActive("/admin/totalExpense")} 
-            />
+
             <SidebarLink 
               to="/admin/society" 
               icon={<FaBuilding />} 
