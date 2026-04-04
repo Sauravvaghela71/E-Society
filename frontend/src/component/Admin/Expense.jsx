@@ -58,7 +58,7 @@ export default function Expense() {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API);
+      const res = await axios.get(`${API}/all`);
       setExpenses(res.data?.data || []);
     } catch (e) {
       toast.error("Could not load expenses");
@@ -78,7 +78,8 @@ export default function Expense() {
     }
     try {
       setSubmitting(true);
-      await axios.post(API, { ...form, amount: Number(form.amount) });
+      // Fixed POST endpoint
+      await axios.post(`${API}/create`, { ...form, amount: Number(form.amount) });
       toast.success("Expense recorded successfully!");
       setForm(emptyForm);
       setShowForm(false);
@@ -95,7 +96,8 @@ export default function Expense() {
     if (!window.confirm("Delete this expense record?")) return;
     try {
       setDeletingId(id);
-      await axios.delete(`${API}/${id}`);
+      // Fixed DELETE endpoint
+      await axios.delete(`${API}/delete/${id}`);
       toast.success("Expense deleted");
       setExpenses((prev) => prev.filter((e) => e._id !== id));
     } catch (e) {

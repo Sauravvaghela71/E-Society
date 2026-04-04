@@ -17,7 +17,6 @@ import AdminComplaint from "../component/Admin/Complain";
 import Notice from "../component/Admin/Notice";
 import Emergency from "../component/Admin/Emergency";
 import Security from "../component/Admin/Security";
-import TotalExpense from "../component/Admin/TotalExpense";
 import Expense from "../component/Admin/Expense";
 import Society from "../component/Admin/Society";
 import FlatDetails from "../component/Admin/FlatDetails";
@@ -65,7 +64,6 @@ const router = createBrowserRouter([
       { path: "notice", element: <Notice /> }, // ✅ fixed duplicate
       { path: "emergency", element: <Emergency /> },
       { path: "security", element: <Security /> },
-      { path: "totalexpense", element: <TotalExpense /> },
       { path: "expense", element: <Expense /> },
       { path: "society", element: <Society /> },
       { path: "flatdetails", element: <FlatDetails /> },
