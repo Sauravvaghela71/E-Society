@@ -25,6 +25,9 @@ const Dashboard = () => {
 
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [recentVisitors, setRecentVisitors] = useState([]);
+  const [recentExpenses, setRecentExpenses] = useState([]);
+  const [recentNotices, setRecentNotices] = useState([]);
+  const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Get Admin Name (if available)
@@ -50,11 +53,11 @@ const Dashboard = () => {
           axios.get(`${API}/visitor`),
           axios.get(`${API}/complaint`),
           axios.get(`${API}/security`),
-          axios.get(`${API}/notice`),
-          axios.get(`${API}/expense`),
+          axios.get(`${API}/notice/all`).catch(() => axios.get(`${API}/notice`)),
+          axios.get(`${API}/expense/all`),
           axios.get(`${API}/facilities/bookings`),
           axios.get(`${API}/maintenance`),
-          axios.get(`${API}/society`),
+          axios.get(`${API}/society/society`).catch(() => axios.get(`${API}/society`)),
           axios.get(`${API}/flats`)
         ]);
 
@@ -63,7 +66,9 @@ const Dashboard = () => {
             const d = res.value.data;
             if (Array.isArray(d)) return d.length;
             if (d?.data && Array.isArray(d.data)) return d.data.length;
-            if (d?.notices) return d.notices.length;
+            if (d?.notices && Array.isArray(d.notices)) return d.notices.length;
+            if (d?.societies && Array.isArray(d.societies)) return d.societies.length;
+            if (typeof d === 'object' && d !== null && !Array.isArray(d)) return 1;
           }
           return 0;
         };
@@ -73,12 +78,18 @@ const Dashboard = () => {
             const d = res.value.data;
             if (Array.isArray(d)) return d;
             if (d?.data && Array.isArray(d.data)) return d.data;
+            if (d?.notices && Array.isArray(d.notices)) return d.notices;
+            if (d?.societies && Array.isArray(d.societies)) return d.societies;
+            if (typeof d === 'object') return [d];
           }
           return [];
         };
 
         const complaintsList = safeGetData(resComplaints);
         const visitorsList = safeGetData(resVisitors);
+        const expensesList = safeGetData(resExpense);
+        const noticesList = safeGetData(resNotice);
+        const bookingsList = safeGetData(resFacilities);
 
         setCounts({
           residents: safeGetCount(resResidents),
@@ -94,7 +105,10 @@ const Dashboard = () => {
         });
 
         setRecentComplaints(complaintsList.slice(-4).reverse());
-        setRecentVisitors(visitorsList.slice(0, 4));
+        setRecentVisitors(visitorsList.slice(-4).reverse()); // Fixed this to show recent
+        setRecentExpenses(expensesList.slice(0, 4));
+        setRecentNotices(noticesList.slice(0, 4));
+        setRecentBookings(bookingsList.slice(0, 4));
 
       } catch (err) {
         console.error("Dashboard fetch error", err);
@@ -229,6 +243,96 @@ const Dashboard = () => {
                       <CalendarClock size={10}/>
                       {v.entryTime ? new Date(v.entryTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : '—'}
                     </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Additional Feeds Section (Expenses, Notices, Bookings) */}
+        <div className="grid lg:grid-cols-3 gap-6">
+
+          {/* Recent Expenses */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <IndianRupee className="text-teal-500" /> Recent Expenses
+              </h2>
+              <Link to="/admin/expense" className="text-sm font-bold text-blue-600 hover:text-blue-800">View All</Link>
+            </div>
+            <div className="space-y-4">
+              {recentExpenses.length === 0 ? (
+                <p className="text-gray-400 text-center py-4 text-sm font-medium">No recent expenses</p>
+              ) : recentExpenses.map((e, i) => (
+                <div key={i} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 hover:border-teal-200 transition-colors">
+                  <div>
+                    <p className="font-bold text-gray-800">{e.title}</p>
+                    <p className="text-xs text-gray-500 font-semibold mt-0.5">{new Date(e.expenseDate || e.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-red-500 text-sm">
+                      -₹{Number(e.amount).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Notices */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <BellRing className="text-pink-500" /> Recent Notices
+              </h2>
+              <Link to="/admin/notice" className="text-sm font-bold text-blue-600 hover:text-blue-800">View All</Link>
+            </div>
+            <div className="space-y-4">
+              {recentNotices.length === 0 ? (
+                <p className="text-gray-400 text-center py-4 text-sm font-medium">No active notices</p>
+              ) : recentNotices.map((n, i) => (
+                <div key={i} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 hover:border-pink-200 transition-colors">
+                  <div>
+                    <p className="font-bold text-gray-800 truncate max-w-[200px]">{n.title}</p>
+                    <p className="text-xs text-gray-500 font-semibold mt-0.5">{new Date(n.date || n.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-pink-100 text-pink-700">
+                      View
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Bookings */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                <CalendarDays className="text-green-500" /> Facility Bookings
+              </h2>
+              <Link to="/admin/facilities" className="text-sm font-bold text-blue-600 hover:text-blue-800">View All</Link>
+            </div>
+            <div className="space-y-4">
+              {recentBookings.length === 0 ? (
+                <p className="text-gray-400 text-center py-4 text-sm font-medium">No recent bookings</p>
+              ) : recentBookings.map((b, i) => (
+                <div key={i} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 hover:border-green-200 transition-colors">
+                  <div>
+                    <p className="font-bold text-gray-800">{b.facilityName}</p>
+                    <p className="text-xs text-gray-500 font-semibold mt-0.5">By: {b.userName || "Resident"}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                      b.status === "Approved" ? "bg-green-100 text-green-700" :
+                      b.status === "Rejected" ? "bg-red-100 text-red-700" :
+                      "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {b.status || "Pending"}
+                    </span>
                   </div>
                 </div>
               ))}
