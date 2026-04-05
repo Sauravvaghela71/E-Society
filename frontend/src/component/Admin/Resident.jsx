@@ -12,6 +12,49 @@ export default function ResidentForm() {
   const [editId, setEditId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [selectedResident, setSelectedResident] = useState(null);
+
+  // OTP States
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => setOtpTimer((prev) => prev - 1), 1000);
+    } else if (otpTimer === 0) {
+      setIsOtpSent(false);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  const sendOtp = async () => {
+    const email = watch("email");
+    if (!email) return alert("Please enter email first to send OTP");
+    try {
+      await axios.post("http://localhost:5100/api/otp/send-otp", { email });
+      setIsOtpSent(true);
+      setOtpTimer(90); // 1.30 minute
+      alert("OTP sent to " + email);
+    } catch (err) {
+      alert(err.response?.data?.message || "Error sending OTP");
+    }
+  };
+
+  const verifyOtp = async () => {
+    const email = watch("email");
+    if (!otpValue) return alert("Please enter OTP");
+    try {
+      await axios.post("http://localhost:5100/api/otp/verify-otp", { email, otp: otpValue });
+      setIsEmailVerified(true);
+      setIsOtpSent(false); // Stop timer visually
+      setOtpTimer(0);
+      alert("Email verified successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Invalid or expired OTP");
+    }
+  };
   const {
     register,
     handleSubmit,
@@ -52,6 +95,10 @@ export default function ResidentForm() {
   // 2. SUBMIT LOGIC (ADD & UPDATE FIXED)
   const onSubmit = async (data) => {
     try {
+      if (!editId && !isEmailVerified) {
+        return alert("Please verify the email with OTP to complete registration.");
+      }
+
       // FIX: FormData Object banana padega image ke liye
       const formData = new FormData();
 
@@ -143,6 +190,10 @@ export default function ResidentForm() {
   const closeForm = () => {
     setShowForm(false);
     setEditId(null);
+    setIsOtpSent(false);
+    setOtpTimer(0);
+    setIsEmailVerified(false);
+    setOtpValue("");
     reset({});
   };
 
@@ -265,14 +316,45 @@ export default function ResidentForm() {
             pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10-digit number" } 
           })} 
         />
-        <Input 
-          label="Email" 
-          error={errors.email} 
-          register={register("email", { 
-            required: "Email is required", 
-            pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } 
-          })} 
-        />
+        <div className="relative">
+          <Input 
+            label="Email" 
+            error={errors.email} 
+            register={register("email", { 
+              required: "Email is required", 
+              pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } 
+            })} 
+          />
+          {!editId && (
+            <div className="mt-2 flex justify-end">
+              <button 
+                type="button" 
+                onClick={sendOtp} 
+                disabled={isOtpSent || isEmailVerified} 
+                className={`text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border ${isEmailVerified ? 'bg-green-50 text-green-700 border-green-200' : isOtpSent ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 transition-colors'}`}
+              >
+                {isEmailVerified ? '✅ Verified' : isOtpSent ? `Resend in ${otpTimer}s` : 'Send OTP'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!editId && isOtpSent && !isEmailVerified && (
+          <div>
+            <label className="block text-[11px] font-black tracking-widest text-indigo-900/60 uppercase mb-1.5">Enter OTP *</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                maxLength={6}
+                value={otpValue}
+                onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ''))}
+                className="w-full border-2 bg-white/50 backdrop-blur-sm p-3 rounded-xl outline-none transition-all shadow-sm font-semibold text-gray-800 focus:bg-white border-gray-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                placeholder="Enter 6-digit OTP"
+              />
+              <button type="button" onClick={verifyOtp} className="bg-indigo-600 text-white font-bold px-6 rounded-xl hover:bg-indigo-700 shadow-md">Verify</button>
+            </div>
+          </div>
+        )}
 
         {/* Password field only for New Registration */}
         {!editId && (
