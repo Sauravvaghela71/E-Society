@@ -21,6 +21,7 @@ const facility = require("./src/Route/FacilityRoute");
 const flat = require("./src/Route/FlatRoute");
 const maintenance = require("./src/Route/MaintenanceRoute");
 const payment     = require("./src/Route/PaymentRoute");
+const otp = require("./src/Route/OtpRoute");
 
 /* SCHEDULED JOBS */
 const cron        = require("node-cron");
@@ -52,6 +53,7 @@ app.use("/api/facilities", facility);
 app.use("/api/flats", flat);
 app.use("/api/maintenance", maintenance);
 app.use("/api/payment",     payment);
+app.use("/api/otp", otp);
 
 /* TEST */
 
