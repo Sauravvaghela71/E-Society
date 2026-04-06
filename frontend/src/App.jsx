@@ -1,6 +1,7 @@
 import React from "react";
 import AppRouter from "./router/AppRouter";
 import { ToastContainer, Zoom } from "react-toastify";
+import GlobalLoader from "./component/GlobalLoader";
 
 // ✅ Clean stale session
 function clearStaleSession() {
@@ -17,6 +18,7 @@ clearStaleSession();
 function App() {
   return (
     <>
+      <GlobalLoader />
       <AppRouter />
 
       <ToastContainer
