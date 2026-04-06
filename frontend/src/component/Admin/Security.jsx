@@ -511,7 +511,7 @@ export default function Security() {
                     ) : (
                       <div className="p-16 text-center">
                         <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">🛡️</div>
-                        <h3 className="text-xl font-bold text-gray-800">No Security Staff Found</h3>
+                        <h3 className="text-xl font-bold text-gray-800">No Security  Found</h3>
                         <p className="text-gray-500 mt-2">Try adjusting your search or add a new guard.</p>
                       </div>
                     )}

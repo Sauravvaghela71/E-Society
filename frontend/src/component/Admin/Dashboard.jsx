@@ -125,7 +125,7 @@ const Dashboard = () => {
     { name: "Complaints", count: counts.complaints, path: "/admin/complain", icon: <MessageCircle size={24}/>, color: "text-orange-600 bg-orange-50 border-orange-100" },
     { name: "Facilities", count: counts.facilities, path: "/admin/facilities", icon: <CalendarDays size={24}/>, color: "text-green-600 bg-green-50 border-green-100" },
     { name: "Maintenance", count: counts.maintenance, path: "/admin/maintainancesetting", icon: <Wrench size={24}/>, color: "text-yellow-600 bg-yellow-50 border-yellow-100" },
-    { name: "Security Staff", count: counts.security, path: "/admin/security", icon: <ShieldAlert size={24}/>, color: "text-indigo-600 bg-indigo-50 border-indigo-100" },
+    { name: "Security", count: counts.security, path: "/admin/security", icon: <ShieldAlert size={24}/>, color: "text-indigo-600 bg-indigo-50 border-indigo-100" },
     { name: "Notices", count: counts.notice, path: "/admin/notice", icon: <BellRing size={24}/>, color: "text-pink-600 bg-pink-50 border-pink-100" },
     { name: "Expenses", count: counts.expense, path: "/admin/expense", icon: <IndianRupee size={24}/>, color: "text-teal-600 bg-teal-50 border-teal-100" },
     { name: "Society Info", count: counts.society, path: "/admin/society", icon: <Building2 size={24}/>, color: "text-sky-600 bg-sky-50 border-sky-100" },

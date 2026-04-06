@@ -70,7 +70,7 @@ export default function AdminSidebar() {
             <SidebarLink 
               to="/admin/security" 
               icon={<FaShieldAlt />} 
-              label="Security Staff" 
+              label="Security" 
               active={isActive("/admin/security")} 
             />
             <SidebarLink 
